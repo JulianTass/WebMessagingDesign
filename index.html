@@ -1,0 +1,579 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>TalentHub Employer</title>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css" crossorigin="anonymous">
+  <link rel="stylesheet" href="styles.css">
+  <!-- Genesys CSS https://spark.genesys.com/ -->
+  <link href="https://dhqbrvplips7x.cloudfront.net/common-ui-docs/genesys-webcomponents/3.8.1-178/genesys-webcomponents/genesys-webcomponents.css" rel="stylesheet">
+  <script type="module" src="https://dhqbrvplips7x.cloudfront.net/common-ui-docs/genesys-webcomponents/3.8.1-178/genesys-webcomponents/genesys-webcomponents.esm.js"></script>
+  <!-- Okta Auth JS -->
+  <script src="https://global.oktacdn.com/okta-auth-js/7.5.1/okta-auth-js.min.js"></script>
+</head>
+<body>
+
+<!-- ---------------------------------------------------------------- -->
+<!-- Genesys Web Messaging bootstrap snippet — MUST run first so that -->
+<!-- window.Genesys exists (as a command queue) before any of our     -->
+<!-- own code below tries to call Genesys('command', ...) etc.        -->
+<!-- ---------------------------------------------------------------- -->
+<script type="text/javascript" charset="utf-8">
+  (function (g, e, n, es, ys) {
+    g['_genesysJs'] = e;
+    g[e] = g[e] || function () {
+      (g[e].q = g[e].q || []).push(arguments)
+    };
+    g[e].t = 1 * new Date();
+    g[e].c = es;
+    ys = document.createElement('script'); ys.async = 1; ys.src = n; ys.charset = 'utf-8'; document.head.appendChild(ys);
+  })(window, 'Genesys', 'https://apps.mypurecloud.com.au/genesys-bootstrap/genesys.min.js', {
+    environment: 'prod-apse2',
+    deploymentId: '80372e7d-209b-4b93-ae33-e3078f7f8df2'
+  });
+</script>
+<!-- Auth + Genesys AuthProvider must load immediately after bootstrap -->
+<script src="auth.js"></script>
+<script src="debug.js"></script>
+<script src="genesys-auth-provider.js"></script>
+<script src="genesys.js"></script>
+
+<!-- Login view (unauthenticated) -->
+<section id="login-view" class="login-view" aria-label="Employer sign in">
+  <div class="login-brand-panel">
+    <div class="brand-logo">
+      <div class="logo-mark">TH</div>
+      <span class="brand-name">TalentHub Employer</span>
+    </div>
+    <h1>Build the team that moves your business forward.</h1>
+    <p class="lead">Manage requisitions, review applicants and collaborate with your hiring team from one secure workspace.</p>
+    <ul class="benefits-list">
+      <li><i class="fa-solid fa-briefcase" aria-hidden="true"></i> Manage job requisitions</li>
+      <li><i class="fa-solid fa-users" aria-hidden="true"></i> Review and shortlist candidates</li>
+      <li><i class="fa-solid fa-comments" aria-hidden="true"></i> Get help through secure messaging</li>
+    </ul>
+    <div class="css-illustration" aria-hidden="true">
+      <div class="shape card-shape"></div>
+      <div class="shape circle-shape"></div>
+      <div class="shape bar-shape"></div>
+      <div class="shape dot-grid"></div>
+    </div>
+  </div>
+
+  <div class="login-form-panel">
+    <div class="login-card">
+      <h2>Employer sign in</h2>
+      <p class="subtitle">You'll be redirected to your organisation's secure Okta sign-in.</p>
+
+      <div class="login-status" id="login-ready">
+        <p id="login-status-text">Sign in to access your employer workspace.</p>
+        <button id="login-btn" class="btn btn-primary" type="button">Continue to secure sign-in</button>
+      </div>
+
+      <div id="login-redirecting" class="login-status" hidden>
+        <div class="spinner" role="status" aria-label="Loading"></div>
+        <p>Redirecting you to secure sign-in…</p>
+      </div>
+
+      <div id="login-callback" class="login-status" hidden>
+        <div class="spinner" role="status" aria-label="Loading"></div>
+        <p>Completing secure sign-in…</p>
+      </div>
+
+      <div id="login-error" class="login-error" hidden>
+        <p id="login-error-message">Something went wrong while signing you in. Please try again.</p>
+        <button id="login-retry-btn" class="btn btn-primary" type="button">Retry sign-in</button>
+        <button id="login-error-details-toggle" class="error-details-toggle" type="button" aria-expanded="false">Show technical details</button>
+        <pre id="login-error-details" class="error-details" hidden></pre>
+      </div>
+
+      <div class="login-footer">
+        <i class="fa-solid fa-shield-halved" aria-hidden="true"></i>
+        Secure authentication powered by Okta
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- Authenticated employer portal -->
+<div id="portal" class="portal" hidden>
+  <header class="topbar">
+    <button id="sidebar-toggle" class="sidebar-toggle" type="button" aria-label="Open navigation menu">
+      <i class="fa-solid fa-bars" aria-hidden="true"></i>
+    </button>
+    <div class="topbar-brand">
+      <div class="logo-mark">TH</div>
+      <span>TalentHub Employer</span>
+    </div>
+    <div class="topbar-search">
+      <i class="fa-solid fa-magnifying-glass" aria-hidden="true"></i>
+      <input id="global-search" type="search" placeholder="Search requisitions, candidates or job titles" aria-label="Global search">
+    </div>
+    <div class="topbar-actions">
+      <button class="icon-btn" type="button" aria-label="Help"><i class="fa-regular fa-circle-question" aria-hidden="true"></i></button>
+      <button class="icon-btn" type="button" aria-label="Notifications"><i class="fa-regular fa-bell" aria-hidden="true"></i></button>
+      <span class="org-name">Northstar Digital</span>
+      <div class="user-menu-wrap">
+        <button id="user-menu-btn" class="user-btn" type="button" aria-expanded="false" aria-haspopup="true">
+          <div id="user-avatar" class="avatar" aria-hidden="true">U</div>
+          <span id="user-display-name">User</span>
+          <i class="fa-solid fa-chevron-down" aria-hidden="true" style="font-size:0.7rem;color:var(--text-muted)"></i>
+        </button>
+        <div id="user-menu" class="user-menu" hidden role="menu">
+          <button type="button" role="menuitem">Profile</button>
+          <button type="button" role="menuitem">Organisation settings</button>
+          <button id="logout-btn" type="button" role="menuitem" class="danger">Log out</button>
+        </div>
+      </div>
+    </div>
+  </header>
+
+  <div id="sidebar-overlay" class="sidebar-overlay" aria-hidden="true"></div>
+
+  <div class="portal-body">
+    <aside class="sidebar" aria-label="Main navigation">
+      <nav class="sidebar-nav">
+        <button class="nav-item active" data-view="overview" type="button"><i class="fa-solid fa-chart-pie" aria-hidden="true"></i> Overview</button>
+        <button class="nav-item" data-view="requisitions" type="button"><i class="fa-solid fa-briefcase" aria-hidden="true"></i> Requisitions</button>
+        <button class="nav-item" data-view="candidates" type="button"><i class="fa-solid fa-user-group" aria-hidden="true"></i> Candidates</button>
+        <button class="nav-item" data-view="talent-pools" type="button"><i class="fa-solid fa-database" aria-hidden="true"></i> Talent pools</button>
+        <button class="nav-item" data-view="reports" type="button"><i class="fa-solid fa-chart-line" aria-hidden="true"></i> Reports</button>
+        <button class="nav-item" data-view="settings" type="button"><i class="fa-solid fa-gear" aria-hidden="true"></i> Settings</button>
+      </nav>
+      <button id="sidebar-create-btn" class="btn btn-primary sidebar-create" type="button">Create requisition</button>
+    </aside>
+
+    <main class="main-content">
+
+      <!-- Overview / Dashboard -->
+      <section id="view-overview" class="view-panel">
+        <h2 id="dashboard-greeting">Good morning</h2>
+        <p style="color:var(--text-muted);margin:4px 0 24px">Here's what's happening across your hiring pipeline today.</p>
+
+        <div class="metrics-grid">
+          <div class="metric-card"><span class="metric-value">12</span><span class="metric-label">Open requisitions</span></div>
+          <div class="metric-card"><span class="metric-value">186</span><span class="metric-label">Active candidates</span></div>
+          <div class="metric-card"><span class="metric-value">24</span><span class="metric-label">Interviews this week</span></div>
+          <div class="metric-card"><span class="metric-value">8</span><span class="metric-label">Offers awaiting action</span></div>
+        </div>
+
+        <div class="dashboard-grid">
+          <div class="section-card">
+            <h3>Attention required</h3>
+            <ul class="attention-list">
+              <li><i class="fa-solid fa-circle-exclamation" aria-hidden="true"></i> 17 candidates awaiting review</li>
+              <li><i class="fa-solid fa-circle-exclamation" aria-hidden="true"></i> 4 interview scorecards overdue</li>
+              <li><i class="fa-solid fa-circle-exclamation" aria-hidden="true"></i> 3 requisitions closing soon</li>
+            </ul>
+          </div>
+          <div class="section-card">
+            <h3>Recruitment pipeline</h3>
+            <div id="pipeline-bars"></div>
+          </div>
+        </div>
+
+        <div class="section-card">
+          <div class="page-header" style="margin-bottom:16px">
+            <h3 style="margin:0">Recent requisitions</h3>
+            <button id="dashboard-create-btn" class="btn btn-primary btn-sm" type="button">Create requisition</button>
+          </div>
+          <div class="table-wrap">
+            <table class="data-table">
+              <thead>
+                <tr>
+                  <th>Job title</th>
+                  <th>Location</th>
+                  <th>Hiring manager</th>
+                  <th>Candidates</th>
+                  <th>Status</th>
+                  <th>Closing date</th>
+                  <th>Actions</th>
+                </tr>
+              </thead>
+              <tbody id="dashboard-req-tbody"></tbody>
+            </table>
+          </div>
+        </div>
+
+        <div class="help-card">
+          <div>
+            <h4>Need help?</h4>
+            <p>Use the messaging button in the bottom-right corner to chat with our support team.</p>
+          </div>
+        </div>
+      </section>
+
+      <!-- Requisitions list -->
+      <section id="view-requisitions" class="view-panel" hidden>
+        <div class="page-header">
+          <div>
+            <h2>Requisitions</h2>
+            <p>Manage open roles and track hiring progress.</p>
+          </div>
+          <button id="req-create-btn" class="btn btn-primary" type="button">Create requisition</button>
+        </div>
+
+        <div class="filters-bar">
+          <input id="req-search" type="search" placeholder="Search requisitions…" aria-label="Search requisitions">
+          <select id="req-status-filter" aria-label="Filter by status">
+            <option value="">All statuses</option>
+          </select>
+          <select id="req-location-filter" aria-label="Filter by location">
+            <option value="">All locations</option>
+          </select>
+          <select id="req-manager-filter" aria-label="Filter by hiring manager">
+            <option value="">All hiring managers</option>
+          </select>
+          <select id="req-sort" aria-label="Sort requisitions">
+            <option value="posted-desc">Posted date (newest)</option>
+            <option value="title-asc">Job title (A–Z)</option>
+            <option value="closing-asc">Closing date (soonest)</option>
+            <option value="applicants-desc">Most applicants</option>
+          </select>
+        </div>
+
+        <div class="table-wrap">
+          <table class="data-table">
+            <thead>
+              <tr>
+                <th>Requisition ID</th>
+                <th>Job title</th>
+                <th>Location</th>
+                <th>Hiring manager</th>
+                <th>Applicants</th>
+                <th>Shortlisted</th>
+                <th>Status</th>
+                <th>Posted date</th>
+                <th>Closing date</th>
+                <th>Actions</th>
+              </tr>
+            </thead>
+            <tbody id="requisitions-tbody"></tbody>
+          </table>
+        </div>
+        <div id="requisitions-empty" class="empty-state" hidden>
+          <i class="fa-solid fa-folder-open" aria-hidden="true"></i>
+          <p>No requisitions match your filters.</p>
+        </div>
+      </section>
+
+      <!-- Requisition detail -->
+      <section id="view-requisition-detail" class="view-panel" hidden>
+        <button id="req-detail-back" class="btn btn-ghost btn-sm" type="button" data-action="back-to-requisitions" style="margin-bottom:16px">
+          <i class="fa-solid fa-arrow-left" aria-hidden="true"></i> Back to requisitions
+        </button>
+
+        <div class="detail-header">
+          <h2 id="req-detail-title">Senior Product Designer</h2>
+          <p id="req-detail-meta" class="detail-meta">REQ-1048 · Sydney, NSW · Hybrid</p>
+          <div class="detail-actions">
+            <button class="btn btn-secondary btn-sm" type="button">Edit requisition</button>
+            <button class="btn btn-secondary btn-sm" type="button">Pause requisition</button>
+            <button class="btn btn-secondary btn-sm" type="button">Share</button>
+            <button class="btn btn-ghost btn-sm" type="button">More</button>
+          </div>
+        </div>
+
+        <div class="req-tabs" role="tablist">
+          <button class="req-tab active" data-tab="overview" type="button" role="tab">Overview</button>
+          <button class="req-tab" data-tab="candidates" type="button" role="tab">Candidates</button>
+          <button class="req-tab" data-tab="activity" type="button" role="tab">Activity</button>
+          <button class="req-tab" data-tab="job-details" type="button" role="tab">Job details</button>
+          <button class="req-tab" data-tab="hiring-team" type="button" role="tab">Hiring team</button>
+        </div>
+
+        <div id="tab-overview" class="req-tab-panel">
+          <div id="req-summary-cards" class="summary-cards"></div>
+        </div>
+
+        <div id="tab-candidates" class="req-tab-panel" hidden>
+          <div id="req-kanban" class="kanban-board"></div>
+        </div>
+
+        <div id="tab-activity" class="req-tab-panel" hidden>
+          <div class="section-card">
+            <p class="text-muted">Recent activity for this requisition will appear here.</p>
+          </div>
+        </div>
+
+        <div id="tab-job-details" class="req-tab-panel" hidden>
+          <div class="section-card">
+            <p class="text-muted">Full job description and requirements.</p>
+          </div>
+        </div>
+
+        <div id="tab-hiring-team" class="req-tab-panel" hidden>
+          <div class="section-card">
+            <p class="text-muted">Hiring team members and roles.</p>
+          </div>
+        </div>
+      </section>
+
+      <!-- Candidates -->
+      <section id="view-candidates" class="view-panel" hidden>
+        <div class="page-header">
+          <div>
+            <h2>Candidates</h2>
+            <p>Search, filter and manage applicants across all requisitions.</p>
+          </div>
+        </div>
+
+        <div class="filters-bar">
+          <input id="cand-search" type="search" placeholder="Search candidates…" aria-label="Search candidates">
+          <select id="cand-req-filter" aria-label="Filter by requisition">
+            <option value="">All requisitions</option>
+          </select>
+          <select id="cand-stage-filter" aria-label="Filter by stage">
+            <option value="">All stages</option>
+          </select>
+          <select id="cand-location-filter" aria-label="Filter by location">
+            <option value="">All locations</option>
+          </select>
+          <select id="cand-skills-filter" aria-label="Filter by skills">
+            <option value="">All skills</option>
+          </select>
+          <select id="cand-sort" aria-label="Sort candidates">
+            <option value="match-desc">Match (highest)</option>
+            <option value="name-asc">Name (A–Z)</option>
+            <option value="applied-desc">Applied date (newest)</option>
+            <option value="activity-desc">Last activity (recent)</option>
+          </select>
+        </div>
+
+        <div id="bulk-actions-bar" class="bulk-bar" hidden>
+          <span id="bulk-count">0 selected</span>
+          <button class="btn btn-secondary btn-sm" type="button">Move stage</button>
+          <button class="btn btn-secondary btn-sm" type="button">Add tag</button>
+          <button class="btn btn-secondary btn-sm" type="button">Send message</button>
+          <button class="btn btn-secondary btn-sm" type="button">Archive</button>
+        </div>
+
+        <div class="table-wrap">
+          <table class="data-table">
+            <thead>
+              <tr>
+                <th>Select</th>
+                <th>Candidate</th>
+                <th>Applied for</th>
+                <th>Location</th>
+                <th>Match</th>
+                <th>Stage</th>
+                <th>Applied date</th>
+                <th>Last activity</th>
+                <th>Actions</th>
+              </tr>
+            </thead>
+            <tbody id="candidates-tbody"></tbody>
+          </table>
+        </div>
+        <div id="candidates-empty" class="empty-state" hidden>
+          <i class="fa-solid fa-user-slash" aria-hidden="true"></i>
+          <p>No candidates match your filters.</p>
+        </div>
+      </section>
+
+      <!-- Placeholder views -->
+      <section id="view-talent-pools" class="view-panel" hidden></section>
+      <section id="view-reports" class="view-panel" hidden>
+        <div class="placeholder-view"><h2>Reports</h2><p>Track hiring funnel performance and team activity.</p></div>
+      </section>
+      <section id="view-settings" class="view-panel" hidden>
+        <div class="placeholder-view"><h2>Settings</h2><p>Configure organisation preferences and integrations.</p></div>
+      </section>
+
+    </main>
+  </div>
+</div>
+
+<!-- Candidate profile drawer -->
+<div id="profile-backdrop" class="profile-backdrop" hidden aria-hidden="true"></div>
+<aside id="candidate-profile" class="profile-drawer" hidden aria-hidden="true" aria-label="Candidate profile">
+  <div class="profile-header">
+    <button id="profile-close-btn" class="profile-close" type="button" aria-label="Close profile"><i class="fa-solid fa-xmark" aria-hidden="true"></i></button>
+    <div class="profile-hero">
+      <div id="profile-avatar" class="avatar">MP</div>
+      <div>
+        <h2 id="profile-name" style="margin:0 0 4px">Candidate name</h2>
+        <p id="profile-title" class="text-muted">Current title</p>
+        <p id="profile-location" class="text-muted">Location</p>
+        <p class="text-muted"><span id="profile-email"></span> · <span id="profile-phone"></span></p>
+        <p><span id="profile-match" class="match-badge">0% match</span> · Stage: <strong id="profile-stage">New</strong></p>
+      </div>
+    </div>
+    <div class="profile-actions">
+      <button class="btn btn-primary btn-sm" type="button">Shortlist</button>
+      <select id="profile-stage-select" class="select-sm" style="width:auto" aria-label="Move candidate stage"></select>
+      <button class="btn btn-secondary btn-sm" type="button">Schedule interview</button>
+      <button class="btn btn-secondary btn-sm" type="button">Send email</button>
+      <button class="btn btn-ghost btn-sm" type="button">More</button>
+    </div>
+  </div>
+  <div class="profile-body">
+    <div class="profile-section">
+      <h4>Professional summary</h4>
+      <p id="profile-summary"></p>
+    </div>
+    <div class="profile-section">
+      <h4>Work history</h4>
+      <div id="profile-work"></div>
+    </div>
+    <div class="profile-section">
+      <h4>Education</h4>
+      <div id="profile-education"></div>
+    </div>
+    <div class="profile-section">
+      <h4>Skills</h4>
+      <div id="profile-skills" class="skill-tags"></div>
+    </div>
+    <div class="profile-section">
+      <h4>Application answers</h4>
+      <div id="profile-answers"></div>
+    </div>
+    <div class="profile-section">
+      <h4>Resume preview</h4>
+      <div class="resume-placeholder"><i class="fa-regular fa-file-pdf" aria-hidden="true"></i><p>Resume preview placeholder</p></div>
+    </div>
+    <div class="profile-section">
+      <h4>Internal notes</h4>
+      <textarea class="notes-area" placeholder="Add a note for the hiring team…" aria-label="Internal notes"></textarea>
+    </div>
+    <div class="profile-section">
+      <h4>Hiring team activity</h4>
+      <p class="text-muted">No recent activity recorded.</p>
+    </div>
+    <div class="profile-section ai-card">
+      <span class="ai-badge">Mock AI content</span>
+      <h4>AI candidate summary</h4>
+      <p class="text-muted" style="font-size:0.8125rem;margin-bottom:12px">This is illustrative mock content — not a real AI assessment.</p>
+      <h5>Relevant strengths</h5>
+      <ul id="ai-strengths"></ul>
+      <h5>Possible gaps</h5>
+      <ul id="ai-gaps"></ul>
+      <h5>Suggested interview questions</h5>
+      <ul id="ai-questions"></ul>
+    </div>
+  </div>
+</aside>
+
+<!-- Create requisition modal -->
+<div id="create-requisition-modal" class="modal" hidden aria-hidden="true" role="dialog" aria-labelledby="create-modal-title">
+  <div id="modal-backdrop" class="modal-backdrop"></div>
+  <div class="modal-dialog">
+    <div class="modal-header">
+      <h3 id="create-modal-title">Create requisition</h3>
+      <button id="modal-close-btn" class="modal-close-btn" type="button" aria-label="Close"><i class="fa-solid fa-xmark" aria-hidden="true"></i></button>
+    </div>
+    <form id="create-requisition-form">
+      <div class="modal-body">
+        <div class="step-indicators">
+          <div class="step-indicator active" data-step="1">1. Role details</div>
+          <div class="step-indicator" data-step="2">2. Job description</div>
+          <div class="step-indicator" data-step="3">3. Hiring workflow</div>
+          <div class="step-indicator" data-step="4">4. Review</div>
+        </div>
+
+        <div class="create-step" data-step="1">
+          <div class="form-grid">
+            <div class="form-group full">
+              <label for="jobTitle">Job title</label>
+              <input id="jobTitle" name="jobTitle" type="text" required placeholder="e.g. Senior Product Designer">
+            </div>
+            <div class="form-group">
+              <label for="location">Location</label>
+              <select id="location" name="location">
+                <option>Sydney</option>
+                <option>Melbourne</option>
+                <option>Brisbane</option>
+                <option>Remote</option>
+              </select>
+            </div>
+            <div class="form-group">
+              <label for="employmentType">Employment type</label>
+              <select id="employmentType" name="employmentType">
+                <option>Full-time</option>
+                <option>Part-time</option>
+                <option>Contract</option>
+              </select>
+            </div>
+            <div class="form-group">
+              <label for="workplaceType">Workplace type</label>
+              <select id="workplaceType" name="workplaceType">
+                <option>Hybrid</option>
+                <option>On-site</option>
+                <option>Remote</option>
+              </select>
+            </div>
+            <div class="form-group">
+              <label for="department">Department</label>
+              <input id="department" name="department" type="text" placeholder="e.g. Product">
+            </div>
+          </div>
+        </div>
+
+        <div class="create-step" data-step="2" hidden>
+          <div class="form-group">
+            <label for="jobSummary">Job summary</label>
+            <textarea id="jobSummary" name="jobSummary" placeholder="Brief overview of the role…"></textarea>
+          </div>
+          <div class="form-group">
+            <label for="responsibilities">Responsibilities</label>
+            <textarea id="responsibilities" name="responsibilities" placeholder="Key responsibilities…"></textarea>
+          </div>
+          <div class="form-group">
+            <label for="requirements">Requirements</label>
+            <textarea id="requirements" name="requirements" placeholder="Skills and experience required…"></textarea>
+          </div>
+          <div class="form-group">
+            <label for="salaryRange">Salary range</label>
+            <input id="salaryRange" name="salaryRange" type="text" placeholder="e.g. $120,000 – $140,000">
+          </div>
+        </div>
+
+        <div class="create-step" data-step="3" hidden>
+          <div class="form-grid">
+            <div class="form-group">
+              <label for="hiringManager">Hiring manager</label>
+              <select id="hiringManager" name="hiringManager">
+                <option>Olivia Chen</option>
+                <option>Marcus Lee</option>
+                <option>Priya Shah</option>
+                <option>Daniel Morgan</option>
+                <option>Sarah Wilson</option>
+              </select>
+            </div>
+            <div class="form-group">
+              <label for="recruiter">Recruiter</label>
+              <select id="recruiter" name="recruiter">
+                <option>James Porter</option>
+                <option>Priya Shah</option>
+                <option>Daniel Morgan</option>
+                <option>Sarah Wilson</option>
+              </select>
+            </div>
+            <div class="form-group">
+              <label for="closingDate">Closing date</label>
+              <input id="closingDate" name="closingDate" type="date">
+            </div>
+          </div>
+        </div>
+
+        <div class="create-step" data-step="4" hidden>
+          <div id="create-review"></div>
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button id="create-draft-btn" class="btn btn-secondary" type="button">Save draft</button>
+        <button id="create-back-btn" class="btn btn-ghost" type="button" hidden>Back</button>
+        <button id="create-continue-btn" class="btn btn-primary" type="button">Continue</button>
+        <button id="create-publish-btn" class="btn btn-primary" type="button" hidden>Publish requisition</button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<script src="mock-data.js"></script>
+<script src="app.js"></script>
+
+</body>
+</html>
