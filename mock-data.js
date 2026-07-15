@@ -1,14 +1,14 @@
 'use strict';
 
 /**
- * In-memory mock data for TalentHub Employer portal.
+ * In-memory mock data for Career Marketplace portal.
  * New requisitions and stage changes persist via localStorage (see app.js).
  */
 
 const STORAGE_KEYS = {
-  REQUISITIONS: 'talenthub-requisitions',
-  CANDIDATE_STAGES: 'talenthub-candidate-stages',
-  ACTIVE_SECTION: 'talenthub-active-section'
+  REQUISITIONS: 'career-marketplace-requisitions',
+  CANDIDATE_STAGES: 'career-marketplace-candidate-stages',
+  ACTIVE_SECTION: 'career-marketplace-active-section'
 };
 
 const DEFAULT_REQUISITIONS = [
@@ -339,7 +339,7 @@ function saveToStorage(key, value) {
   }
 }
 
-window.TalentHubData = {
+window.CareerMarketplaceData = {
   STORAGE_KEYS,
   DEFAULT_REQUISITIONS,
   DEFAULT_CANDIDATES,

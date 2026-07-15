@@ -73,8 +73,8 @@ function captureAuthCodeFromUrl() {
     const params = new URLSearchParams(window.location.search);
     const code = params.get('code');
     if (code) {
-      if (window.TalentHubGenesysAuth?.persistAuthHandoff) {
-        window.TalentHubGenesysAuth.persistAuthHandoff(code);
+      if (window.CareerMarketplaceGenesysAuth?.persistAuthHandoff) {
+        window.CareerMarketplaceGenesysAuth.persistAuthHandoff(code);
       } else {
         sessionStorage.setItem(PENDING_AUTH_CODE_KEY, code);
       }
@@ -100,7 +100,7 @@ async function logOktaJwtDebug(label) {
   if (!idToken) return;
   console.group('🧪 [JWT DEBUG] ' + label);
   console.log('Claims:', idToken.claims);
-  if (window.TalentHubDebug?.isEnabled?.()) {
+  if (window.CareerMarketplaceDebug?.isEnabled?.()) {
     console.log('Full ID Token:', idToken.idToken);
   }
   console.groupEnd();
@@ -111,19 +111,19 @@ async function completePortalLogin(claims) {
   console.log('Okta login successful');
   await logOktaJwtDebug('After Okta login');
 
-  if (window.TalentHubTrace) {
-    window.TalentHubTrace.success('1-PORTAL-LOGIN-COMPLETE', {
+  if (window.CareerMarketplaceTrace) {
+    window.CareerMarketplaceTrace.success('1-PORTAL-LOGIN-COMPLETE', {
       user: claims?.email || claims?.sub,
       next: 'prefetching Genesys authCode in background'
     });
   }
 
-  if (window.TalentHubGenesys?.showLauncherAfterLogin) {
-    window.TalentHubGenesys.showLauncherAfterLogin();
+  if (window.CareerMarketplaceGenesys?.showLauncherAfterLogin) {
+    window.CareerMarketplaceGenesys.showLauncherAfterLogin();
   }
 
-  if (TalentHubAuth.callbacks.onAuthenticated) {
-    TalentHubAuth.callbacks.onAuthenticated(claims);
+  if (CareerMarketplaceAuth.callbacks.onAuthenticated) {
+    CareerMarketplaceAuth.callbacks.onAuthenticated(claims);
   }
 }
 
@@ -133,14 +133,14 @@ function clearGenesysAuthHandoff() {
     sessionStorage.removeItem('genesys-pending-code-verifier');
     sessionStorage.removeItem('genesys-pending-nonce');
   } catch (e) { /* ignore */ }
-  if (window.TalentHubGenesysAuth?.clearHandoff) {
-    window.TalentHubGenesysAuth.clearHandoff();
+  if (window.CareerMarketplaceGenesysAuth?.clearHandoff) {
+    window.CareerMarketplaceGenesysAuth.clearHandoff();
   }
 }
 
 function prefetchGenesysAuthCode() {
   clearGenesysAuthHandoff();
-  window.TalentHubTrace?.log('2-PREFETCH-START', {
+  window.CareerMarketplaceTrace?.log('2-PREFETCH-START', {
     method: 'Okta signInWithRedirect prompt=none',
     clientId: OKTA_GENESYS_CLIENT_ID
   });
@@ -148,7 +148,7 @@ function prefetchGenesysAuthCode() {
   genesysOktaAuth.signInWithRedirect({ prompt: 'none' });
 }
 
-const TalentHubAuth = {
+const CareerMarketplaceAuth = {
   oktaAuth: portalOktaAuth,
   portalOktaAuth,
   genesysOktaAuth,
@@ -178,7 +178,7 @@ const TalentHubAuth = {
 
   signIn() {
     markRedirectAttempt();
-    TalentHubAuth.callbacks.onRedirecting?.();
+    CareerMarketplaceAuth.callbacks.onRedirecting?.();
     return portalOktaAuth.signInWithRedirect();
   },
 
@@ -194,16 +194,16 @@ const TalentHubAuth = {
       sessionStorage.removeItem(PENDING_AUTH_CODE_KEY);
       sessionStorage.removeItem(GENESYS_PREFETCH_KEY);
     } catch (e) { /* ignore */ }
-    TalentHubAuth.genesysChatAuthenticated = false;
-    if (window.TalentHubGenesys?.hideLauncher) window.TalentHubGenesys.hideLauncher();
-    try { await window.TalentHubGenesysAuth?.logout?.(); } catch (e) { /* ignore */ }
-    TalentHubAuth.callbacks.onUnauthenticated?.();
+    CareerMarketplaceAuth.genesysChatAuthenticated = false;
+    if (window.CareerMarketplaceGenesys?.hideLauncher) window.CareerMarketplaceGenesys.hideLauncher();
+    try { await window.CareerMarketplaceGenesysAuth?.logout?.(); } catch (e) { /* ignore */ }
+    CareerMarketplaceAuth.callbacks.onUnauthenticated?.();
     await portalOktaAuth.signOut({ closeSession: false });
   },
 
   onGenesysChatAuthenticated(data) {
     console.log('✅ Genesys Web Messaging authenticated');
-    TalentHubAuth.genesysChatAuthenticated = true;
+    CareerMarketplaceAuth.genesysChatAuthenticated = true;
   },
 
   onGenesysInjectionError(error) {
@@ -212,15 +212,15 @@ const TalentHubAuth = {
       ? (data.message || data.error || data.error_description ||
          (error?.eventName === 'authError' ? 'Unable to fetch authentication token (Genesys→Okta server exchange)' : null))
       : String(data);
-    window.TalentHubTrace?.error('8-GENESYS-INJECTION-FAILED', {
+    window.CareerMarketplaceTrace?.error('8-GENESYS-INJECTION-FAILED', {
       message: msg || 'Genesys authentication failed — check 8-EXCHANGE-FAILED-SERVER above',
       full: error?.data ?? error
     });
   },
 
   renderUnauthedState() {
-    if (window.TalentHubGenesys?.hideLauncher) window.TalentHubGenesys.hideLauncher();
-    TalentHubAuth.callbacks.onUnauthenticated?.();
+    if (window.CareerMarketplaceGenesys?.hideLauncher) window.CareerMarketplaceGenesys.hideLauncher();
+    CareerMarketplaceAuth.callbacks.onUnauthenticated?.();
   },
 
   async init() {
@@ -251,63 +251,63 @@ const TalentHubAuth = {
         }).catch(() => {});
         // #endregion
         history.replaceState({}, document.title, window.location.pathname);
-        window.TalentHubTrace?.success('2-PREFETCH-COMPLETE', {
+        window.CareerMarketplaceTrace?.success('2-PREFETCH-COMPLETE', {
           hint: 'authCode stored — will Auth.signIn after MessagingService.started',
           genesysClientId: OKTA_GENESYS_CLIENT_ID
         });
-        window.TalentHubGenesysAuth?.queueAutoAuth?.('prefetch-complete');
+        window.CareerMarketplaceGenesysAuth?.queueAutoAuth?.('prefetch-complete');
 
-        const claims = await TalentHubAuth.getUserClaims();
+        const claims = await CareerMarketplaceAuth.getUserClaims();
         if (claims) {
-          if (window.TalentHubGenesys?.showLauncherAfterLogin) {
-            window.TalentHubGenesys.showLauncherAfterLogin();
+          if (window.CareerMarketplaceGenesys?.showLauncherAfterLogin) {
+            window.CareerMarketplaceGenesys.showLauncherAfterLogin();
           }
-          if (TalentHubAuth.callbacks.onAuthenticated) {
-            TalentHubAuth.callbacks.onAuthenticated(claims);
+          if (CareerMarketplaceAuth.callbacks.onAuthenticated) {
+            CareerMarketplaceAuth.callbacks.onAuthenticated(claims);
           }
         }
         return;
       }
 
-      TalentHubAuth.callbacks.onHandlingCallback?.();
+      CareerMarketplaceAuth.callbacks.onHandlingCallback?.();
       try {
         await portalOktaAuth.handleLoginRedirect();
       } catch (err) {
         console.error('Okta handleLoginRedirect failed:', err);
-        window.TalentHubTrace?.error('1-PORTAL-LOGIN-FAILED', {
+        window.CareerMarketplaceTrace?.error('1-PORTAL-LOGIN-FAILED', {
           message: err?.message,
           hint: 'Portal uses SPA client (no secret). Genesys uses Acme Web app separately.'
         });
-        TalentHubAuth.renderUnauthedState();
+        CareerMarketplaceAuth.renderUnauthedState();
         return;
       }
 
       history.replaceState({}, document.title, window.location.pathname);
       clearRedirectAttempt();
 
-      const claims = await TalentHubAuth.getUserClaims();
+      const claims = await CareerMarketplaceAuth.getUserClaims();
       if (claims) {
         await completePortalLogin(claims);
         prefetchGenesysAuthCode();
       } else {
-        TalentHubAuth.renderUnauthedState();
+        CareerMarketplaceAuth.renderUnauthedState();
       }
       return;
     }
 
     const isAuthenticated = await portalOktaAuth.isAuthenticated();
     if (isAuthenticated) {
-      const claims = await TalentHubAuth.getUserClaims();
+      const claims = await CareerMarketplaceAuth.getUserClaims();
       if (claims) {
         await completePortalLogin(claims);
         prefetchGenesysAuthCode();
       } else {
-        TalentHubAuth.renderUnauthedState();
+        CareerMarketplaceAuth.renderUnauthedState();
       }
     } else {
-      TalentHubAuth.renderUnauthedState();
+      CareerMarketplaceAuth.renderUnauthedState();
     }
   }
 };
 
-window.TalentHubAuth = TalentHubAuth;
+window.CareerMarketplaceAuth = CareerMarketplaceAuth;

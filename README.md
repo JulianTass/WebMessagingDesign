@@ -1,4 +1,4 @@
-# TalentHub Employer
+# Career Marketplace
 
 A static employer recruitment portal prototype with Okta PKCE authentication and Genesys Authenticated Web Messaging. Inspired by modern employment marketplace employer portals — original branding and design, not a copy of SEEK.
 
@@ -83,7 +83,7 @@ Genesys must be configured for **Authenticated Web Messaging** with an OpenID Co
 
 ## Authentication flow
 
-1. Unauthenticated users see the TalentHub Employer login page with a **Continue to secure sign-in** button.
+1. Unauthenticated users see the Career Marketplace login page with a **Continue to secure sign-in** button.
 2. User clicks the button to start Okta sign-in (no automatic redirect).
 3. While redirecting, the page shows "Redirecting you to secure sign-in…"
 4. Okta hosts the real username/password screen (no credentials on this page).
@@ -170,9 +170,9 @@ Logout (user menu → **Log out**):
 
 | Data | Storage |
 |------|---------|
-| New requisitions | `localStorage` (`talenthub-requisitions`) |
-| Candidate stage changes | `localStorage` (`talenthub-candidate-stages`) |
-| Last active section | `localStorage` (`talenthub-active-section`) |
+| New requisitions | `localStorage` (`career-marketplace-requisitions`) |
+| Candidate stage changes | `localStorage` (`career-marketplace-candidate-stages`) |
+| Last active section | `localStorage` (`career-marketplace-active-section`) |
 | Okta tokens | Okta token manager (not `localStorage` manually) |
 
 The raw JWT is never stored in `localStorage`.

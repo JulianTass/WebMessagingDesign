@@ -14,7 +14,7 @@
     SKILLS_FILTER,
     loadFromStorage,
     saveToStorage
-  } = window.TalentHubData;
+  } = window.CareerMarketplaceData;
 
   let requisitions = [];
   let candidates = [];
@@ -99,6 +99,8 @@
     userClaims = claims;
     $('login-view').hidden = true;
     $('portal').hidden = false;
+
+    window.CareerMarketplaceGenesys?.showLauncherAfterLogin?.();
 
     const displayName = claims.name || claims.email || claims.sub || 'User';
     const firstName = claims.given_name || displayName.split(' ')[0] || 'there';
@@ -745,7 +747,7 @@
     $('create-draft-btn')?.addEventListener('click', saveDraftRequisition);
     $('create-publish-btn')?.addEventListener('click', publishRequisition);
 
-    $('logout-btn')?.addEventListener('click', () => TalentHubAuth.signOut());
+    $('logout-btn')?.addEventListener('click', () => CareerMarketplaceAuth.signOut());
     $('user-menu-btn')?.addEventListener('click', toggleUserMenu);
     document.addEventListener('click', (e) => {
       if (!e.target.closest('#user-menu') && !e.target.closest('#user-menu-btn')) {
@@ -780,10 +782,10 @@
   }
 
   function bindLoginEvents() {
-    $('login-btn')?.addEventListener('click', () => TalentHubAuth.signIn());
+    $('login-btn')?.addEventListener('click', () => CareerMarketplaceAuth.signIn());
     $('login-retry-btn')?.addEventListener('click', () => {
       try { sessionStorage.removeItem('okta-redirect-attempted'); } catch (err) { /* ignore */ }
-      TalentHubAuth.signIn();
+      CareerMarketplaceAuth.signIn();
     });
     $('login-error-details-toggle')?.addEventListener('click', () => {
       $('login-error-details').hidden = !$('login-error-details').hidden;
@@ -802,13 +804,13 @@
     populateFilters();
     bindLoginEvents();
 
-    TalentHubAuth.callbacks.onRedirecting = () => showLoginView('redirecting');
-    TalentHubAuth.callbacks.onHandlingCallback = () => showLoginView('callback');
-    TalentHubAuth.callbacks.onAuthenticated = (claims) => showPortalView(claims);
-    TalentHubAuth.callbacks.onUnauthenticated = () => showLoginView('ready');
-    TalentHubAuth.callbacks.onAuthError = showAuthError;
+    CareerMarketplaceAuth.callbacks.onRedirecting = () => showLoginView('redirecting');
+    CareerMarketplaceAuth.callbacks.onHandlingCallback = () => showLoginView('callback');
+    CareerMarketplaceAuth.callbacks.onAuthenticated = (claims) => showPortalView(claims);
+    CareerMarketplaceAuth.callbacks.onUnauthenticated = () => showLoginView('ready');
+    CareerMarketplaceAuth.callbacks.onAuthError = showAuthError;
 
     showLoginView('ready');
-    TalentHubAuth.init();
+    CareerMarketplaceAuth.init();
   });
 })();

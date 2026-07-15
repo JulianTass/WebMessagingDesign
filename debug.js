@@ -2,12 +2,12 @@
 
 /**
  * Persistent auth trace — survives console clears and page redirects.
- * On-page panel on localhost. Full JWT/authCode logging in debug mode.
+ * Console auth trace on localhost. Full JWT/authCode logging in debug mode.
  */
 
 (function () {
-  const DEBUG_KEY = 'talenthub-debug';
-  const TRACE_KEY = 'talenthub-auth-trace';
+  const DEBUG_KEY = 'career-marketplace-debug';
+  const TRACE_KEY = 'career-marketplace-auth-trace';
   const MAX_ENTRIES = 200;
 
   const trace = [];
@@ -35,7 +35,6 @@
       sessionStorage.setItem(TRACE_KEY, JSON.stringify(trace.slice(-MAX_ENTRIES)));
     } catch (e) { /* ignore */ }
     window.__genesysInjectionLog = trace;
-    updatePanel();
   }
 
   function safeStringify(obj) {
@@ -92,110 +91,6 @@
     }
   }
 
-  /* ---- on-page debug panel ---- */
-  let panelEl = null;
-
-  function ensurePanel() {
-    if (panelEl || !isEnabled()) return;
-    panelEl = document.createElement('div');
-    panelEl.id = 'talenthub-trace-panel';
-    panelEl.innerHTML = `
-      <style>
-        #talenthub-trace-panel {
-          position: fixed; bottom: 0; left: 0; right: 0; z-index: 2147483646;
-          font: 11px/1.4 ui-monospace, monospace;
-          background: #1a1a2e; color: #e0e0e0;
-          border-top: 2px solid #e94560; max-height: 220px;
-          display: flex; flex-direction: column;
-        }
-        #talenthub-trace-panel.collapsed { max-height: 28px; overflow: hidden; }
-        #talenthub-trace-panel .trace-header {
-          display: flex; align-items: center; gap: 8px; padding: 4px 10px;
-          background: #16213e; cursor: pointer; user-select: none; flex-shrink: 0;
-        }
-        #talenthub-trace-panel .trace-header strong { color: #e94560; }
-        #talenthub-trace-panel .trace-body {
-          overflow-y: auto; padding: 6px 10px; flex: 1;
-        }
-        #talenthub-trace-panel .trace-banner {
-          background: #5c1a1a; color: #ffb4b4; padding: 6px 10px; font-size: 11px;
-          border-bottom: 1px solid #e94560;
-        }
-        #talenthub-trace-panel .trace-line.error { color: #ff6b6b; }
-        #talenthub-trace-panel .trace-line.warn { color: #ffd93d; }
-        #talenthub-trace-panel .trace-line.success { color: #6bcb77; }
-        #talenthub-trace-panel button {
-          font: 10px sans-serif; padding: 2px 8px; cursor: pointer;
-          background: #0f3460; color: #fff; border: 1px solid #533483; border-radius: 3px;
-        }
-      </style>
-      <div class="trace-header">
-        <strong>Auth Trace</strong>
-        <span id="trace-count">0 events</span>
-        <button type="button" id="trace-copy-btn">Copy log</button>
-        <button type="button" id="trace-clear-btn">Clear</button>
-        <button type="button" id="trace-persist-btn" title="Keep log across refreshes">Persist</button>
-        <span style="margin-left:auto;font-size:10px;color:#888">click header to collapse</span>
-      </div>
-      <div id="trace-banner" class="trace-banner" hidden></div>
-      <div class="trace-body" id="trace-body"></div>
-    `;
-    document.body.appendChild(panelEl);
-
-    panelEl.querySelector('.trace-header').addEventListener('click', (e) => {
-      if (e.target.tagName === 'BUTTON') return;
-      panelEl.classList.toggle('collapsed');
-    });
-    panelEl.querySelector('#trace-copy-btn').addEventListener('click', (e) => {
-      e.stopPropagation();
-      navigator.clipboard?.writeText(safeStringify(filterUsefulLog()));
-      addEntry('info', 'trace-copied', { count: trace.length });
-    });
-    panelEl.querySelector('#trace-clear-btn').addEventListener('click', (e) => {
-      e.stopPropagation();
-      trace.length = 0;
-      try { sessionStorage.removeItem('talenthub-last-auth-error'); } catch (err) { /* ignore */ }
-      persist();
-    });
-    panelEl.querySelector('#trace-persist-btn').addEventListener('click', (e) => {
-      e.stopPropagation();
-      try { sessionStorage.setItem(DEBUG_KEY, 'true'); } catch (err) { /* ignore */ }
-      addEntry('info', 'trace-persist-on', { hint: 'Log survives page refresh — use Copy log before closing tab' });
-    });
-    showLastAuthErrorBanner();
-  }
-
-  function showLastAuthErrorBanner() {
-    if (!panelEl) return;
-    const banner = panelEl.querySelector('#trace-banner');
-    if (!banner) return;
-    try {
-      const raw = sessionStorage.getItem('talenthub-last-auth-error');
-      if (!raw) { banner.hidden = true; return; }
-      const err = JSON.parse(raw);
-      banner.hidden = false;
-      banner.textContent = 'Last auth failed: ' + (err.message || err.stage) +
-        ' — logs preserved below. Run TalentHubDebug.printGenesysAdminChecklist()';
-    } catch (e) {
-      banner.hidden = true;
-    }
-  }
-
-  function updatePanel() {
-    if (!panelEl) return;
-    showLastAuthErrorBanner();
-    const body = panelEl.querySelector('#trace-body');
-    const count = panelEl.querySelector('#trace-count');
-    if (count) count.textContent = trace.length + ' events';
-    if (!body) return;
-    body.innerHTML = trace.slice(-40).map((e) => {
-      const cls = e.level === 'error' ? 'error' : e.level === 'warn' ? 'warn' : e.level === 'success' ? 'success' : '';
-      const detail = e.detail?.message || e.detail?.code || safeStringify(e.detail).slice(0, 120);
-      return `<div class="trace-line ${cls}">${e.ts.slice(11, 19)} ${e.stage} ${detail}</div>`;
-    }).join('');
-    body.scrollTop = body.scrollHeight;
-  }
-
   /* ---- capture external console errors only (never our own trace output) ---- */
   function shouldCaptureConsole(msg) {
     if (!msg || msg.includes('[AUTH TRACE]')) return false;
@@ -218,7 +113,7 @@
   };
 
   /* ---- public trace API (used by auth-provider, auth.js, genesys.js) ---- */
-  window.TalentHubTrace = {
+  window.CareerMarketplaceTrace = {
     log(stage, detail) { addEntry('info', stage, detail || {}); },
     warn(stage, detail) { addEntry('warn', stage, detail || {}); },
     error(stage, detail) { addEntry('error', stage, detail || {}); },
@@ -229,7 +124,7 @@
       try { sessionStorage.removeItem(TRACE_KEY); } catch (e) { /* ignore */ }
       persist();
     },
-    showPanel() { ensurePanel(); updatePanel(); },
+    showPanel() {},
     redact,
     parseJwt
   };
@@ -253,13 +148,13 @@
     );
   }
 
-  /* ---- TalentHubDebug helpers ---- */
+  /* ---- CareerMarketplaceDebug helpers ---- */
   const PENDING_CODE_KEY = 'genesys-pending-auth-code';
-  const OKTA_TEST_PAYLOAD_KEY = 'talenthub-okta-test-payload';
+  const OKTA_TEST_PAYLOAD_KEY = 'career-marketplace-okta-test-payload';
 
   function getOktaTestPayload() {
-    if (window.TalentHubGenesysAuth?.getOktaTestPayload) {
-      return window.TalentHubGenesysAuth.getOktaTestPayload();
+    if (window.CareerMarketplaceGenesysAuth?.getOktaTestPayload) {
+      return window.CareerMarketplaceGenesysAuth.getOktaTestPayload();
     }
     try {
       const raw = sessionStorage.getItem(OKTA_TEST_PAYLOAD_KEY);
@@ -268,8 +163,8 @@
   }
 
   async function logOktaTokens() {
-    if (!window.TalentHubAuth) return null;
-    const { oktaAuth, REDIRECT_URI } = window.TalentHubAuth;
+    if (!window.CareerMarketplaceAuth) return null;
+    const { oktaAuth, REDIRECT_URI } = window.CareerMarketplaceAuth;
     const isAuthed = await oktaAuth.isAuthenticated();
     const idToken = await oktaAuth.tokenManager.get('idToken');
     const accessToken = await oktaAuth.tokenManager.get('accessToken');
@@ -302,11 +197,11 @@
   function resolveExchangePayload() {
     const stored = getOktaTestPayload();
     if (stored?.authCode && stored?.codeVerifier) {
-      return { payload: stored, source: 'sessionStorage (talenthub-okta-test-payload)' };
+      return { payload: stored, source: 'sessionStorage (career-marketplace-okta-test-payload)' };
     }
     const fromTrace = trace.filter((e) => e.stage === '6-FULL-PAYLOAD-DEBUG').pop()?.detail;
     if (fromTrace?.authCode && fromTrace?.codeVerifier) {
-      return { payload: { ...fromTrace, redirectUri: window.TalentHubAuth?.REDIRECT_URI }, source: 'trace 6-FULL-PAYLOAD-DEBUG' };
+      return { payload: { ...fromTrace, redirectUri: window.CareerMarketplaceAuth?.REDIRECT_URI }, source: 'trace 6-FULL-PAYLOAD-DEBUG' };
     }
     const authCode = sessionStorage.getItem(PENDING_CODE_KEY);
     const codeVerifier = sessionStorage.getItem('genesys-pending-code-verifier');
@@ -316,7 +211,7 @@
           authCode,
           codeVerifier,
           nonce: sessionStorage.getItem('genesys-pending-nonce'),
-          redirectUri: window.TalentHubAuth?.REDIRECT_URI || 'http://localhost:5173/'
+          redirectUri: window.CareerMarketplaceAuth?.REDIRECT_URI || 'http://localhost:5173/'
         },
         source: 'sessionStorage pending handoff'
       };
@@ -334,20 +229,19 @@
     addEntry('info', '3-PREFETCH-STATE', {
       prefetchFlag: sessionStorage.getItem('genesys-prefetch-code'),
       authCodeDelivered: 'check signIn/getAuthCode entries below',
-      genesysChatAuthenticated: window.TalentHubAuth?.genesysChatAuthenticated
+      genesysChatAuthenticated: window.CareerMarketplaceAuth?.genesysChatAuthenticated
     });
 
     addEntry('info', '4-GENESYS-CONFIG', {
-      deploymentId: window.TalentHubGenesys?.DEPLOYMENT_ID,
-      messengerReady: window.TalentHubGenesys?.getReadyState?.()?.messengerReady,
-      portalAuthed: window.TalentHubGenesys?.getReadyState?.()?.portalAuthed
+      deploymentId: window.CareerMarketplaceGenesys?.DEPLOYMENT_ID,
+      messengerReady: window.CareerMarketplaceGenesys?.getReadyState?.()?.messengerReady,
+      portalAuthed: window.CareerMarketplaceGenesys?.getReadyState?.()?.portalAuthed
     });
 
     console.group('🧪 POST-JWT TRACE — useful events only');
     filterUsefulLog().forEach((e) => origLog(e.ts.slice(11, 19), e.level, e.stage, e.detail));
     console.groupEnd();
 
-    ensurePanel();
     return trace.slice();
   }
 
@@ -360,7 +254,7 @@
     const url = URL.createObjectURL(blob);
     const a = document.createElement('a');
     a.href = url;
-    a.download = 'talenthub-auth-trace.json';
+    a.download = 'career-marketplace-auth-trace.json';
     a.click();
     URL.revokeObjectURL(url);
   }
@@ -368,8 +262,8 @@
   async function testMessagingAuth() {
     await tracePostJwt();
     addEntry('info', '5-OPENING-MESSENGER', { via: 'Messenger.open' });
-    if (window.TalentHubGenesys?.openMessenger) {
-      window.TalentHubGenesys.openMessenger();
+    if (window.CareerMarketplaceGenesys?.openMessenger) {
+      window.CareerMarketplaceGenesys.openMessenger();
     } else if (window.Genesys) {
       Genesys('command', 'Messenger.open');
     }
@@ -379,11 +273,11 @@
   async function logOktaTokens() {
     const stored = getOktaTestPayload();
     if (stored?.authCode && stored?.codeVerifier) {
-      return { payload: stored, source: 'sessionStorage (talenthub-okta-test-payload)' };
+      return { payload: stored, source: 'sessionStorage (career-marketplace-okta-test-payload)' };
     }
     const fromTrace = trace.filter((e) => e.stage === '6-FULL-PAYLOAD-DEBUG').pop()?.detail;
     if (fromTrace?.authCode && fromTrace?.codeVerifier) {
-      return { payload: { ...fromTrace, redirectUri: window.TalentHubAuth?.REDIRECT_URI }, source: 'trace 6-FULL-PAYLOAD-DEBUG' };
+      return { payload: { ...fromTrace, redirectUri: window.CareerMarketplaceAuth?.REDIRECT_URI }, source: 'trace 6-FULL-PAYLOAD-DEBUG' };
     }
     const authCode = sessionStorage.getItem(PENDING_CODE_KEY);
     const codeVerifier = sessionStorage.getItem('genesys-pending-code-verifier');
@@ -393,7 +287,7 @@
           authCode,
           codeVerifier,
           nonce: sessionStorage.getItem('genesys-pending-nonce'),
-          redirectUri: window.TalentHubAuth?.REDIRECT_URI || 'http://localhost:5173/'
+          redirectUri: window.CareerMarketplaceAuth?.REDIRECT_URI || 'http://localhost:5173/'
         },
         source: 'sessionStorage pending handoff'
       };
@@ -418,7 +312,7 @@
     const secretErr = validateClientSecret(clientSecret);
     if (secretErr) {
       console.error('❌ ' + secretErr);
-      console.log('Example: TalentHubDebug.printOktaExchangeCurl("1a2b3c4d5e6f...")');
+      console.log('Example: CareerMarketplaceDebug.printOktaExchangeCurl("1a2b3c4d5e6f...")');
       return null;
     }
 
@@ -426,12 +320,12 @@
     if (!resolved) {
       console.error('❌ No authCode payload found.');
       console.log('Steps: 1) Hard refresh  2) Wait for 2-PREFETCH-COMPLETE  3) Run this BEFORE opening messenger');
-      console.log('Or: TalentHubDebug.refreshOktaTestCode() then run again after page reloads');
+      console.log('Or: CareerMarketplaceDebug.refreshOktaTestCode() then run again after page reloads');
       return null;
     }
 
     const { payload, source } = resolved;
-    const redirectUri = payload.redirectUri || window.TalentHubAuth?.REDIRECT_URI || 'http://localhost:5173/';
+    const redirectUri = payload.redirectUri || window.CareerMarketplaceAuth?.REDIRECT_URI || 'http://localhost:5173/';
     const redirectNoSlash = redirectUri.replace(/\/$/, '');
 
     if (payload.used) {
@@ -473,12 +367,12 @@
   }
 
   function refreshOktaTestCode() {
-    if (!window.TalentHubAuth?.signInForGenesysPrefetch) {
-      console.error('TalentHubAuth not loaded');
+    if (!window.CareerMarketplaceAuth?.signInForGenesysPrefetch) {
+      console.error('CareerMarketplaceAuth not loaded');
       return;
     }
     console.log('Prefetching fresh Okta authCode — page will reload. After reload, run printOktaExchangeCurl BEFORE opening messenger.');
-    window.TalentHubAuth.signInForGenesysPrefetch();
+    window.CareerMarketplaceAuth.signInForGenesysPrefetch();
   }
 
   async function testOktaExchange(clientSecret) {
@@ -513,7 +407,7 @@
       return { status: res.status, body: text };
     } catch (err) {
       console.error('Fetch failed (expected CORS):', err.message);
-      console.log('Use: TalentHubDebug.printOktaExchangeCurl("your-secret") → copy curl → run in Terminal');
+      console.log('Use: CareerMarketplaceDebug.printOktaExchangeCurl("your-secret") → copy curl → run in Terminal');
       return null;
     }
   }
@@ -526,7 +420,7 @@
       serverSideStatus: 'FAIL — Genesys cloud cannot exchange authCode with Okta (8-EXCHANGE-FAILED-SERVER)',
       verifyOkta: [
         '1. Hard refresh, wait for 2-PREFETCH-COMPLETE',
-        '2. BEFORE opening messenger: TalentHubDebug.printOktaExchangeCurl("your-real-secret")',
+        '2. BEFORE opening messenger: CareerMarketplaceDebug.printOktaExchangeCurl("your-real-secret")',
         '3. Copy curl output → run in Terminal (browser fetch blocked by CORS)',
         '4. If Okta returns 200 but Genesys fails → Genesys integration secret ≠ Okta secret'
       ],
@@ -554,7 +448,7 @@
         step1: 'Admin → Digital → Messenger → Configurations (or Web Deployments)',
         step2: 'Authentication ON → Select Integration dropdown → pick THE SAME integration that has Okta credentials',
         step3: 'Save configuration',
-        step4: 'Deployments → ' + (window.TalentHubGenesys?.DEPLOYMENT_ID || '80372e7d-209b-4b93-ae33-e3078f7f8df2') + ' → assign that config → Save + Publish',
+        step4: 'Deployments → ' + (window.CareerMarketplaceGenesys?.DEPLOYMENT_ID || '80372e7d-209b-4b93-ae33-e3078f7f8df2') + ' → assign that config → Save + Publish',
         step5: 'Hard refresh — authEnabled:true in 3-genesys-config-received (integrationId is server-side only, null in browser is normal)'
       },
       commonMistakes: [
@@ -576,9 +470,9 @@
     return trace.slice();
   }
 
-  window.TalentHubDebug = {
+  window.CareerMarketplaceDebug = {
     isEnabled,
-    enable() { sessionStorage.setItem(DEBUG_KEY, 'true'); ensurePanel(); },
+    enable() { sessionStorage.setItem(DEBUG_KEY, 'true'); },
     disable() { sessionStorage.removeItem(DEBUG_KEY); },
     logOktaTokens,
     tracePostJwt,
@@ -592,23 +486,6 @@
     getInjectionLog,
     exportLog,
     parseJwt,
-    showPanel() { ensurePanel(); }
+    showPanel() {}
   };
-
-  if (isEnabled()) {
-    const bootPanel = () => { ensurePanel(); updatePanel(); };
-    if (document.body) bootPanel();
-    else document.addEventListener('DOMContentLoaded', bootPanel);
-    const restoredCount = trace.length;
-    addEntry('info', 'trace-init', {
-      message: 'Auth trace ON — logs persist in panel at bottom (survives messenger close)',
-      restoredFromSession: restoredCount
-    });
-    if (restoredCount > 0) {
-      addEntry('info', 'trace-restored', {
-        count: restoredCount,
-        hint: 'Previous session logs loaded — scroll panel or click Copy log'
-      });
-    }
-  }
 })();

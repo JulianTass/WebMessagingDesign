@@ -2,7 +2,7 @@
 
 /**
  * AuthProvider — Genesys OIDC authCode handoff (Implicit Flow = False).
- * All stages logged to TalentHubTrace (persistent, on-page panel).
+ * All stages logged to CareerMarketplaceTrace (persistent console trace).
  */
 
 (function registerEarlyAuthProvider() {
@@ -16,7 +16,7 @@
   const PENDING_VERIFIER_KEY = 'genesys-pending-code-verifier';
   const PENDING_NONCE_KEY = 'genesys-pending-nonce';
   const PENDING_CAPTURED_AT_KEY = 'genesys-pending-captured-at';
-  const OKTA_TEST_PAYLOAD_KEY = 'talenthub-okta-test-payload';
+  const OKTA_TEST_PAYLOAD_KEY = 'career-marketplace-okta-test-payload';
   let authProviderRef = null;
   let authCodeDelivered = false;
   let lastDeliveredCodePrefix = null;
@@ -63,8 +63,8 @@
   }
 
   function trace(level, stage, detail) {
-    if (window.TalentHubTrace) {
-      window.TalentHubTrace[level](stage, detail || {});
+    if (window.CareerMarketplaceTrace) {
+      window.CareerMarketplaceTrace[level](stage, detail || {});
     } else {
       console.log('[GENESYS]', stage, detail);
     }
@@ -87,7 +87,7 @@
 
   function readOktaTransactionMeta() {
     try {
-      const genesysKey = window.TalentHubAuth?.GENESYS_TRANSACTION_STORAGE_KEY || 'okta-genesys-transaction';
+      const genesysKey = window.CareerMarketplaceAuth?.GENESYS_TRANSACTION_STORAGE_KEY || 'okta-genesys-transaction';
       const raw = window.sessionStorage.getItem(genesysKey) ||
                   window.sessionStorage.getItem('okta-genesys-transaction') ||
                   window.sessionStorage.getItem('okta-transaction-storage') ||
@@ -122,7 +122,7 @@
         codeVerifier: meta.codeVerifier || null,
         nonce: meta.nonce || null,
         redirectUri: REDIRECT_URI,
-        clientId: window.TalentHubAuth?.OKTA_GENESYS_CLIENT_ID || '0oa14bp5cafStwgaY698',
+        clientId: window.CareerMarketplaceAuth?.OKTA_GENESYS_CLIENT_ID || '0oa14bp5cafStwgaY698',
         capturedAt: Date.now(),
         used: false
       }));
@@ -155,10 +155,10 @@
       verifierLen: meta.codeVerifier ? meta.codeVerifier.length : 0,
       hasNonce: !!meta.nonce,
       nonceLen: meta.nonce ? meta.nonce.length : 0,
-      storageKey: window.TalentHubAuth?.GENESYS_TRANSACTION_STORAGE_KEY || 'okta-genesys-transaction'
+      storageKey: window.CareerMarketplaceAuth?.GENESYS_TRANSACTION_STORAGE_KEY || 'okta-genesys-transaction'
     });
     trace('log', '2-authCode-captured-for-genesys', {
-      authCode: window.TalentHubTrace?.redact(authCode) || '***',
+      authCode: window.CareerMarketplaceTrace?.redact(authCode) || '***',
       hasCodeVerifier: !!meta.codeVerifier,
       hasNonce: !!meta.nonce,
       redirectUri: REDIRECT_URI
@@ -202,7 +202,7 @@
         hasCodeVerifier: !!lastDeliveredPayload.codeVerifier,
         hasNonce: !!lastDeliveredPayload.nonce
       });
-      if (window.TalentHubDebug?.isEnabled?.()) {
+      if (window.CareerMarketplaceDebug?.isEnabled?.()) {
         trace('log', '6-FULL-PAYLOAD-DEBUG', {
           authCode: lastDeliveredPayload.authCode,
           codeVerifier: lastDeliveredPayload.codeVerifier,
@@ -243,14 +243,14 @@
         : null
     });
     trace('log', '6-deliver-to-genesys-' + source, {
-      authCode: window.TalentHubTrace?.redact(payload.authCode),
+      authCode: window.CareerMarketplaceTrace?.redact(payload.authCode),
       redirectUri: payload.redirectUri,
       nonce: payload.nonce ? (payload.nonce.slice(0, 12) + '…') : null,
       hasCodeVerifier: !!payload.codeVerifier,
       nextStep: 'Genesys exchanges authCode with Okta OIDC → returns Genesys JWT'
     });
 
-    if (window.TalentHubDebug?.isEnabled?.()) {
+    if (window.CareerMarketplaceDebug?.isEnabled?.()) {
       trace('log', '6-FULL-PAYLOAD-DEBUG', {
         authCode: payload.authCode,
         codeVerifier: payload.codeVerifier,
@@ -269,16 +269,16 @@
       action: 'silent Okta redirect (prompt=none)',
       reason: 'no valid authCode available for Genesys'
     });
-    if (window.TalentHubAuth?.signInForGenesysPrefetch) {
-      window.TalentHubAuth.signInForGenesysPrefetch();
-    } else if (window.TalentHubAuth?.genesysOktaAuth) {
+    if (window.CareerMarketplaceAuth?.signInForGenesysPrefetch) {
+      window.CareerMarketplaceAuth.signInForGenesysPrefetch();
+    } else if (window.CareerMarketplaceAuth?.genesysOktaAuth) {
       sessionStorage.setItem('genesys-prefetch-code', 'true');
-      window.TalentHubAuth.genesysOktaAuth.signInWithRedirect({ prompt: 'none' });
+      window.CareerMarketplaceAuth.genesysOktaAuth.signInWithRedirect({ prompt: 'none' });
     }
   }
 
   function isGenesysAlreadyAuthenticated() {
-    if (window.TalentHubAuth?.genesysChatAuthenticated) return true;
+    if (window.CareerMarketplaceAuth?.genesysChatAuthenticated) return true;
     if (authProviderRef) {
       try {
         return !!authProviderRef.data('Auth.authenticated');
@@ -336,7 +336,7 @@
     const now = Date.now();
     if (now - lastAutoAuthAt < AUTO_AUTH_COOLDOWN_MS) return;
 
-    const oktaAuth = window.TalentHubAuth?.portalOktaAuth || window.TalentHubAuth?.oktaAuth;
+    const oktaAuth = window.CareerMarketplaceAuth?.portalOktaAuth || window.CareerMarketplaceAuth?.oktaAuth;
     const portalAuthed = oktaAuth ? await oktaAuth.isAuthenticated() : false;
     if (!portalAuthed) {
       trace('log', '4-autoAuth-SKIP', { source, reason: 'portal not authenticated' });
@@ -425,7 +425,7 @@
   trace('log', '0-authProvider-init', {
     redirectUri: REDIRECT_URI,
     flow: 'authCode',
-    genesysClientId: window.TalentHubAuth?.OKTA_GENESYS_CLIENT_ID
+    genesysClientId: window.CareerMarketplaceAuth?.OKTA_GENESYS_CLIENT_ID
   });
 
   try {
@@ -463,7 +463,7 @@
           return;
         }
 
-        const oktaAuth = window.TalentHubAuth?.portalOktaAuth || window.TalentHubAuth?.oktaAuth;
+        const oktaAuth = window.CareerMarketplaceAuth?.portalOktaAuth || window.CareerMarketplaceAuth?.oktaAuth;
         const isAuthed = oktaAuth && await oktaAuth.isAuthenticated();
         trace('warn', '5-signIn-NO-CODE', {
           oktaAuthenticated: isAuthed,
@@ -471,7 +471,7 @@
         });
 
         if (isAuthed) requestFreshAuthCode();
-        else if (window.TalentHubAuth?.signIn) TalentHubAuth.signIn();
+        else if (window.CareerMarketplaceAuth?.signIn) CareerMarketplaceAuth.signIn();
         else if (oktaAuth) oktaAuth.signInWithRedirect();
         else AuthProvider.publish('signInFailed', { message: 'No login handler' });
 
@@ -548,15 +548,15 @@
       });
 
       AuthProvider.subscribe('Auth.authenticated', (data) => {
-        const parsed = data?.jwt ? window.TalentHubTrace?.parseJwt(data.jwt) : null;
+        const parsed = data?.jwt ? window.CareerMarketplaceTrace?.parseJwt(data.jwt) : null;
         trace('success', '8-Auth.authenticated-SUCCESS', {
           hasJwt: !!(data?.jwt || data?.token),
           jwtClaims: parsed?.payload || data?.claims || null,
-          raw: window.TalentHubDebug?.isEnabled?.() ? data : undefined
+          raw: window.CareerMarketplaceDebug?.isEnabled?.() ? data : undefined
         });
         clearAuthHandoff();
-        if (window.TalentHubAuth?.onGenesysChatAuthenticated) {
-          window.TalentHubAuth.onGenesysChatAuthenticated(data);
+        if (window.CareerMarketplaceAuth?.onGenesysChatAuthenticated) {
+          window.CareerMarketplaceAuth.onGenesysChatAuthenticated(data);
         }
       });
 
@@ -577,8 +577,8 @@
           handoffCleared: true
         });
         dumpError('8-Auth.error-FAILED', error);
-        if (window.TalentHubAuth?.onGenesysInjectionError) {
-          window.TalentHubAuth.onGenesysInjectionError(error);
+        if (window.CareerMarketplaceAuth?.onGenesysInjectionError) {
+          window.CareerMarketplaceAuth.onGenesysInjectionError(error);
         }
       });
 
@@ -608,19 +608,19 @@
             oktaClientSecret: 'must match active secret in Okta Acme Web app',
             redirectUri: REDIRECT_URI
           },
-          run: 'TalentHubDebug.printGenesysAdminChecklist()',
-          note: 'Logs saved in Auth Trace panel (bottom) — no auto-redirect so console stays'
+          run: 'CareerMarketplaceDebug.printGenesysAdminChecklist()',
+          note: 'Logs saved in console — no auto-redirect so console stays'
         });
         try {
-          sessionStorage.setItem('talenthub-last-auth-error', JSON.stringify({
+          sessionStorage.setItem('career-marketplace-last-auth-error', JSON.stringify({
             at: Date.now(),
             stage: '8-Auth.authError',
             message: 'Unable to fetch authentication token (Genesys→Okta exchange)'
           }));
         } catch (e) { /* ignore */ }
-        window.TalentHubTrace?.showPanel?.();
-        if (window.TalentHubAuth?.onGenesysInjectionError) {
-          window.TalentHubAuth.onGenesysInjectionError(error);
+        window.CareerMarketplaceTrace?.showPanel?.();
+        if (window.CareerMarketplaceAuth?.onGenesysInjectionError) {
+          window.CareerMarketplaceAuth.onGenesysInjectionError(error);
         }
       });
 
@@ -649,7 +649,7 @@
         deploymentConfigKeys: dep ? Object.keys(dep) : [],
         authKeys: clientAuth ? Object.keys(clientAuth) : [],
         authSettingsKeys: serverAuthSettings ? Object.keys(serverAuthSettings) : [],
-        deploymentId: window.TalentHubGenesys?.DEPLOYMENT_ID,
+        deploymentId: window.CareerMarketplaceGenesys?.DEPLOYMENT_ID,
         configDeploymentId: dep?.id || null,
         configVersion: dep?.version || null,
         allowSessionUpgrade: auth?.allowSessionUpgrade
@@ -666,7 +666,7 @@
           ? 'integrationId not sent to browser (normal) — verify authenticationSettings.integrationId via Genesys API'
           : undefined,
         knownServerIntegrationId: serverAuthSettings?.integrationId || '(check Genesys API — not sent to browser)',
-        deploymentId: window.TalentHubGenesys?.DEPLOYMENT_ID,
+        deploymentId: window.CareerMarketplaceGenesys?.DEPLOYMENT_ID,
         configVersion: dep?.version,
         authConfigFull: clientAuth || null,
         deploymentConfigKeys: dep ? Object.keys(dep) : [],
@@ -737,7 +737,7 @@
   })();
   // #endregion
 
-  window.TalentHubGenesysAuth = {
+  window.CareerMarketplaceGenesysAuth = {
     logout() {
       if (authProviderRef) return authProviderRef.command('Auth.logout');
     },
@@ -748,7 +748,7 @@
       authCodeDelivered = false;
       clearAuthHandoff();
     },
-    getInjectionLog() { return window.TalentHubTrace?.getLog() || []; },
+    getInjectionLog() { return window.CareerMarketplaceTrace?.getLog() || []; },
     getAgentDebugLogs() {
       try { return JSON.parse(sessionStorage.getItem('debug-c75c01-logs') || '[]'); }
       catch (e) { return []; }
