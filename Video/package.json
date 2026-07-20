@@ -1,0 +1,25 @@
+{
+  "name": "seek-meeting-scheduler",
+  "version": "1.0.0",
+  "description": "SEEK Meeting Scheduler — Zoom + Microsoft Graph POC",
+  "main": "src/app.js",
+  "type": "commonjs",
+  "scripts": {
+    "start": "node src/app.js",
+    "dev": "node --watch src/app.js",
+    "test": "node --test tests/"
+  },
+  "engines": {
+    "node": ">=18"
+  },
+  "dependencies": {
+    "@azure/msal-node": "^2.16.2",
+    "dotenv": "^16.4.7",
+    "express": "^4.21.2",
+    "express-rate-limit": "^7.5.0",
+    "express-session": "^1.18.1",
+    "helmet": "^8.0.0",
+    "ics": "^3.8.1",
+    "luxon": "^3.5.0"
+  }
+}

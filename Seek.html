@@ -1,0 +1,1418 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>SEEK — Employer Portal</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;600;700&family=IBM+Plex+Sans:wght@400;500;600&family=IBM+Plex+Mono:wght@500;600&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --ink:#12193A;
+    --ink-soft:#3A4270;
+    --paper:#F5F6FA;
+    --paper-dim:#ECEEF7;
+    --blue:#2851FF;
+    --blue-dark:#1B3AC4;
+    --pink:#FF3D7F;
+    --sky:#6E8CFF;
+    --warning:#F59E0B;
+    --warning-dark:#B45F06;
+    --mobile-bg:#0D3880;
+    --danger:#D6335F;
+    --line:rgba(18,25,58,0.12);
+    --line-light:rgba(245,246,250,0.16);
+    --radius:10px;
+    --disp:'Space Grotesk',sans-serif;
+    --body:'IBM Plex Sans',sans-serif;
+    --mono:'IBM Plex Mono',monospace;
+  }
+  *{box-sizing:border-box; margin:0; padding:0;}
+  body{font-family:var(--body); background:var(--paper-dim); color:var(--ink); -webkit-font-smoothing:antialiased;}
+  button{font-family:inherit; cursor:pointer;}
+  input{font-family:inherit;}
+  ::selection{background:var(--pink); color:var(--ink);}
+
+  /* ---------- App shell ---------- */
+  #app{min-height:100vh; display:flex; flex-direction:column;}
+
+  /* ================= LOGIN VIEW ================= */
+  #login-view{flex:1; display:flex; flex-direction:column;}
+
+  .top-strip{
+    display:flex; align-items:center; justify-content:space-between;
+    padding:20px 32px; background:var(--paper);
+  }
+  .brand{
+    display:flex; align-items:center;
+  }
+  .brand-logo{
+    display:block; height:28px; width:auto;
+  }
+  .brand-logo--dark{display:none;}
+  .dash-header .brand-logo--light{display:none;}
+  .dash-header .brand-logo--dark{display:block; height:26px;}
+  .top-strip .tagline{font-family:var(--mono); font-size:11px; color:var(--ink-soft); letter-spacing:0.04em; text-transform:uppercase;}
+
+  .login-wrap{
+    flex:1; display:grid; grid-template-columns: 1.1fr 1fr;
+  }
+
+  /* Left brand panel (desktop) */
+  .panel-brand{
+    background:var(--ink); color:var(--paper); padding:56px; position:relative; overflow:hidden;
+    display:flex; flex-direction:column; justify-content:center;
+  }
+  .panel-brand .lanes{
+    position:absolute; inset:0; opacity:0.5; pointer-events:none;
+  }
+  .panel-brand h1{
+    font-family:var(--disp); font-size:40px; line-height:1.12; font-weight:600; max-width:460px;
+    position:relative; z-index:1;
+  }
+  .panel-brand h1 em{font-style:normal; color:var(--pink);}
+  .panel-brand p{
+    margin-top:18px; color:rgba(245,246,250,0.72); max-width:420px; font-size:15px; line-height:1.6;
+    position:relative; z-index:1;
+  }
+  .stat-row{display:flex; gap:32px; margin-top:44px; position:relative; z-index:1;}
+  .stat-row .stat b{display:block; font-family:var(--disp); font-size:26px; color:var(--paper);}
+  .stat-row .stat span{font-family:var(--mono); font-size:11px; color:var(--sky); text-transform:uppercase; letter-spacing:0.04em;}
+
+  /* Right form panel (desktop) */
+  .panel-form{
+    background:var(--paper); padding:56px; display:flex; flex-direction:column; justify-content:center;
+  }
+  .form-card{max-width:380px; width:100%; margin:0 auto;}
+  .form-card h2{font-family:var(--disp); font-size:24px; font-weight:600; margin-bottom:6px;}
+  .form-card .sub{color:var(--ink-soft); font-size:14px; margin-bottom:28px;}
+
+  .field{margin-bottom:16px;}
+  .field label{display:block; font-size:12px; font-weight:600; margin-bottom:6px; color:var(--ink-soft); text-transform:uppercase; letter-spacing:0.03em;}
+  .field input, .field select{
+    width:100%; padding:12px 14px; border:1.5px solid var(--line); border-radius:var(--radius);
+    background:#fff; font-size:15px; color:var(--ink); transition:border-color .15s; font-family:inherit;
+  }
+  .field input:focus, .field select:focus{outline:none; border-color:var(--blue);}
+
+  .btn-primary{
+    width:100%; padding:13px; background:var(--blue); color:#fff; border:none; border-radius:var(--radius);
+    font-weight:600; font-size:15px; letter-spacing:0.01em; transition:background .15s, transform .1s;
+  }
+  .btn-primary:hover{background:var(--blue-dark);}
+  .btn-primary:active{transform:scale(0.98);}
+
+  .form-foot{margin-top:16px; text-align:center; font-size:13px; color:var(--ink-soft);}
+  .add-job-error{font-size:12.5px; color:var(--warning-dark); min-height:16px; margin:-4px 0 12px;}
+  .form-foot a{color:var(--blue); text-decoration:none; font-weight:600;}
+
+  .divider{display:flex; align-items:center; gap:10px; margin:22px 0; color:var(--ink-soft); font-size:12px; font-family:var(--mono);}
+  .divider::before, .divider::after{content:""; flex:1; height:1px; background:var(--line);}
+
+  /* ---------- Session PIN card (front page feature) ---------- */
+  .pin-card{
+    border:1.5px dashed var(--line); border-radius:var(--radius); padding:18px; margin-top:22px;
+    background:#fff;
+  }
+  .pin-card-head{display:flex; align-items:center; justify-content:space-between; margin-bottom:4px;}
+  .pin-card-head h3{font-size:13px; font-weight:600; text-transform:uppercase; letter-spacing:0.03em; color:var(--ink-soft);}
+  .pin-card-desc{font-size:12.5px; color:var(--ink-soft); line-height:1.5; margin-bottom:14px;}
+
+  .toggle{
+    position:relative; width:42px; height:24px; border-radius:20px; background:var(--line); border:none; flex-shrink:0;
+    transition:background .18s;
+  }
+  .toggle::after{
+    content:""; position:absolute; top:3px; left:3px; width:18px; height:18px; border-radius:50%;
+    background:#fff; box-shadow:0 1px 3px rgba(0,0,0,0.25); transition:transform .18s;
+  }
+  .toggle.on{background:var(--blue);}
+  .toggle.on::after{transform:translateX(18px);}
+
+  .pin-display{
+    display:none; align-items:center; justify-content:space-between; gap:14px;
+    background:var(--ink); border-radius:8px; padding:14px 16px; margin-top:4px;
+  }
+  .pin-display.show{display:flex;}
+  .pin-digits{
+    font-family:var(--mono); font-size:26px; font-weight:600; color:var(--pink); letter-spacing:6px;
+  }
+  .pin-meta{display:flex; flex-direction:column; align-items:flex-end; gap:6px;}
+  .pin-meta .timer{font-family:var(--mono); font-size:12px; color:var(--paper);}
+  .ring{width:26px; height:26px; position:relative;}
+  .ring svg{transform:rotate(-90deg);}
+  .ring circle{fill:none; stroke-width:3;}
+  .ring .bg{stroke:rgba(245,246,250,0.18);}
+  .ring .fg{stroke:var(--pink); stroke-linecap:round; transition:stroke-dashoffset 1s linear;}
+  .pin-copy{
+    background:none; border:1px solid var(--line-light); color:var(--paper); font-size:11px; padding:5px 9px;
+    border-radius:6px; font-family:var(--mono);
+  }
+  .pin-copy:hover{border-color:var(--pink); color:var(--pink);}
+
+  /* Continue conversation banner (login) */
+  .continue-conversation-banner{
+    display:none; width:100%; padding:14px 16px; text-align:center;
+    border:none; background:transparent; font-family:inherit;
+    font-size:14px; line-height:1.45; color:var(--ink);
+  }
+  .continue-conversation-banner.is-visible{display:none;}
+  .continue-conversation-banner strong{
+    display:block; font-family:var(--disp); font-weight:600; font-size:15px; margin-bottom:4px;
+  }
+  .continue-conversation-banner span{color:var(--ink-soft); font-size:13px;}
+  .continue-conversation-hint{
+    display:none; margin-top:10px; font-family:var(--mono); font-size:12.5px; color:var(--sky);
+  }
+  .continue-conversation-banner.show-hint .continue-conversation-hint{display:block;}
+
+  /* ================= PIN LOGIN (mobile) — hidden on desktop ================= */
+  .pin-login{display:none;}
+
+  /* ================= DASHBOARD ================= */
+  #dashboard-view{display:none; flex:1; flex-direction:column; min-height:100vh; background:var(--paper-dim);}
+  .dash-header{
+    background:var(--ink); color:var(--paper); display:flex; align-items:center; justify-content:space-between;
+    padding:14px 24px;
+  }
+  .dash-header .brand{color:var(--paper);}
+  .dash-header-left{display:flex; align-items:center; gap:12px;}
+  .hamburger-btn{
+    display:none; align-items:center; justify-content:center; background:none; border:none; color:var(--paper);
+    padding:4px; flex-shrink:0;
+  }
+  .hamburger-btn svg{width:22px; height:22px;}
+  .dash-user{display:flex; align-items:center; gap:12px; font-size:13px;}
+  .dash-user .avatar{
+    width:32px; height:32px; border-radius:50%; background:var(--pink); color:var(--ink);
+    display:flex; align-items:center; justify-content:center; font-family:var(--disp); font-weight:700; font-size:13px;
+  }
+  .logout-link{color:var(--sky); text-decoration:none; font-size:12px; border:1px solid var(--line-light); padding:6px 12px; border-radius:8px;}
+  .logout-link:hover{color:var(--paper); border-color:var(--paper);}
+
+  /* Mobile profile trigger */
+  .profile-trigger{
+    display:none; align-items:center; gap:8px; background:rgba(245,246,250,0.08); border:1px solid var(--line-light);
+    padding:5px 12px 5px 5px; border-radius:24px; color:var(--paper);
+  }
+  .profile-trigger:active{background:rgba(245,246,250,0.16);}
+  .profile-trigger .avatar{width:28px; height:28px; font-size:11px;}
+  .profile-trigger-text{display:flex; flex-direction:column; align-items:flex-start; line-height:1.25;}
+  .profile-trigger-name{font-size:12.5px; font-weight:600;}
+  .profile-trigger-sub{font-size:10px; color:var(--sky);}
+  .profile-trigger svg{width:13px; height:13px; color:var(--sky); flex-shrink:0;}
+
+  /* Bottom sheet */
+  .sheet-overlay{align-items:flex-end;}
+  .sheet{
+    width:100%; max-width:480px; margin:0 auto; background:var(--paper); border-radius:20px 20px 0 0;
+    padding:12px 22px 30px; box-shadow:0 -10px 34px rgba(18,25,58,0.28); animation:slideUp .18s ease-out;
+  }
+  @keyframes slideUp{from{transform:translateY(28px); opacity:0;} to{transform:translateY(0); opacity:1;}}
+  .sheet-handle{width:36px; height:4px; background:var(--line); border-radius:4px; margin:0 auto 20px;}
+  .sheet-profile{display:flex; align-items:center; gap:14px; margin-bottom:16px;}
+  .avatar-lg{width:52px; height:52px; font-size:18px;}
+  .sheet-name{font-family:var(--disp); font-weight:600; font-size:16px;}
+  .sheet-email{font-size:12.5px; color:var(--ink-soft); margin-top:2px;}
+  .sheet-plan{
+    display:flex; align-items:center; justify-content:space-between; background:#fff; border:1px solid var(--line);
+    border-radius:var(--radius); padding:12px 14px; font-size:13.5px; font-weight:600; margin-bottom:18px;
+  }
+  .sheet-menu{display:flex; flex-direction:column; gap:2px;}
+  .sheet-menu button{
+    display:flex; align-items:center; width:100%; text-align:left; padding:13px 10px; border:none; background:none;
+    border-radius:8px; font-size:14.5px; font-weight:500; color:var(--ink); font-family:inherit;
+  }
+  .sheet-menu button:active{background:var(--paper-dim);}
+  .sheet-menu .sheet-signout{color:var(--warning-dark); font-weight:600; border-top:1px solid var(--line); margin-top:4px; padding-top:16px;}
+
+  .dash-body{flex:1; display:grid; grid-template-columns:220px 1fr; }
+  .sidebar{background:var(--ink); color:var(--paper); padding:20px 12px;}
+  .sidebar nav a{
+    display:flex; align-items:center; gap:10px; padding:10px 12px; border-radius:8px; color:rgba(245,246,250,0.72);
+    text-decoration:none; font-size:14px; margin-bottom:2px; font-weight:500;
+  }
+  .sidebar nav a.active{background:var(--blue); color:#fff;}
+  .sidebar nav a:hover:not(.active){background:rgba(245,246,250,0.06); color:var(--paper);}
+  .sidebar .dash-mark{padding:4px 12px 20px;}
+
+  .main{padding:28px 32px; overflow-y:auto;}
+  .dash-page{display:none;}
+  .dash-page.active{display:block;}
+  .faq-page h1{margin-bottom:8px;}
+  .faq-page .sub{margin-bottom:20px;}
+  #genesys-support-center{min-height:480px;}
+  .main h1{font-family:var(--disp); font-size:26px; font-weight:600;}
+  .main .sub{color:var(--ink-soft); font-size:14px; margin-top:4px; margin-bottom:26px;}
+
+  .stat-cards{display:grid; grid-template-columns:repeat(4,1fr); gap:16px; margin-bottom:32px;}
+  .card{
+    background:#fff; border:1px solid var(--line); border-radius:14px; padding:18px 20px;
+    position:relative; overflow:hidden; transition:box-shadow .15s, transform .15s;
+  }
+  .card::before{content:""; position:absolute; top:0; left:0; right:0; height:3px; background:var(--blue); opacity:0.85;}
+  .card .c-icon{
+    width:32px; height:32px; border-radius:9px; background:rgba(40,81,255,0.1); color:var(--blue);
+    display:flex; align-items:center; justify-content:center; margin-bottom:12px;
+  }
+  .card .c-icon svg{width:17px; height:17px;}
+  .card .k{font-family:var(--mono); font-size:11px; text-transform:uppercase; letter-spacing:0.04em; color:var(--ink-soft);}
+  .card .v{font-family:var(--disp); font-size:30px; font-weight:600; margin-top:5px; line-height:1;}
+  .card .delta{font-size:12px; color:var(--blue); margin-top:7px; font-weight:600;}
+  .card.card-clickable{cursor:pointer;}
+  .card.card-clickable:hover{box-shadow:0 8px 22px rgba(18,25,58,0.1); transform:translateY(-2px);}
+  .card.card-warn::before{background:var(--warning);}
+  .card.card-warn .c-icon{background:rgba(245,158,11,0.14); color:var(--warning-dark);}
+  .card.card-warn .v{color:var(--warning-dark);}
+  .card.card-warn .delta{color:var(--warning-dark);}
+  .card.card-neutral::before{background:var(--ink-soft); opacity:0.4;}
+  .card.card-neutral .c-icon{background:rgba(58,66,112,0.1); color:var(--ink-soft);}
+
+  .section-title{font-family:var(--disp); font-size:16px; font-weight:600; margin-bottom:12px; display:flex; align-items:center; justify-content:space-between;}
+  .section-title .link{font-size:12px; color:var(--blue); font-weight:600; text-decoration:none; font-family:var(--body); background:none; border:none; cursor:pointer; padding:0;}
+
+  /* Warnings */
+  .warning-list{display:flex; flex-direction:column; gap:10px;}
+  .warning-item{
+    display:flex; align-items:center; gap:14px; background:#fff; border:1px solid var(--line);
+    border-left:4px solid var(--warning); border-radius:var(--radius); padding:14px 18px; cursor:pointer;
+    transition:box-shadow .12s, transform .12s;
+  }
+  .warning-item:hover{box-shadow:0 4px 14px rgba(18,25,58,0.08); transform:translateY(-1px);}
+  .warning-item .w-icon{
+    width:32px; height:32px; border-radius:50%; background:rgba(245,158,11,0.14); color:var(--warning-dark);
+    display:flex; align-items:center; justify-content:center; font-weight:700; font-size:15px; flex-shrink:0;
+  }
+  .warning-item .w-text{flex:1;}
+  .warning-item .w-title{font-weight:600; font-size:14px;}
+  .warning-item .w-sub{font-size:12.5px; color:var(--ink-soft); margin-top:2px;}
+  .warning-item .w-go{font-size:12px; color:var(--blue); font-weight:600; font-family:var(--mono); flex-shrink:0;}
+  .warning-empty{background:#fff; border:1px dashed var(--line); border-radius:var(--radius); padding:16px 18px; color:var(--ink-soft); font-size:13.5px;}
+
+  /* Search & filter */
+  .search-bar{display:flex; gap:10px; margin-bottom:14px;}
+  .search-input{
+    flex:1; display:flex; align-items:center; gap:8px; background:#fff; border:1.5px solid var(--line);
+    border-radius:var(--radius); padding:0 14px; transition:border-color .15s;
+  }
+  .search-input:focus-within{border-color:var(--blue);}
+  .search-input svg{width:16px; height:16px; color:var(--ink-soft); flex-shrink:0;}
+  .search-input input{flex:1; border:none; padding:10px 0; font-size:14px; background:none; color:var(--ink);}
+  .search-input input:focus{outline:none;}
+  #job-status-filter{
+    background:#fff; border:1.5px solid var(--line); border-radius:var(--radius); padding:0 12px;
+    font-size:14px; color:var(--ink); font-family:inherit;
+  }
+  .table-empty{background:#fff; border:1px dashed var(--line); border-radius:var(--radius); padding:24px; text-align:center; color:var(--ink-soft); font-size:13.5px;}
+
+  table{width:100%; border-collapse:collapse; background:#fff; border:1px solid var(--line); border-radius:var(--radius); overflow:hidden;}
+  th{text-align:left; font-size:11px; text-transform:uppercase; letter-spacing:0.04em; color:var(--ink-soft); background:var(--paper-dim); padding:10px 16px; font-weight:600;}
+  td{padding:13px 16px; font-size:14px; border-top:1px solid var(--line);}
+  tbody tr{cursor:pointer; transition:background .1s;}
+  tbody tr:hover{background:var(--paper-dim);}
+  .badge{font-size:11px; font-weight:600; padding:3px 9px; border-radius:20px; display:inline-block;}
+  .badge.open{background:rgba(40,81,255,0.12); color:var(--blue-dark);}
+  .badge.closing{background:rgba(245,158,11,0.16); color:var(--warning-dark);}
+  .badge.paused{background:rgba(18,25,58,0.08); color:var(--ink-soft);}
+  .badge.draft{background:#fff; color:var(--ink-soft); border:1px dashed var(--line);}
+
+  /* ---------- Plan pill in header ---------- */
+  .plan-pill{
+    background:rgba(245,246,250,0.1); border:1px solid var(--line-light); color:var(--sky);
+    font-size:12px; font-weight:600; padding:6px 12px; border-radius:20px;
+  }
+  .plan-pill:hover{border-color:var(--sky); color:var(--paper);}
+
+  /* ---------- Modals / drawers ---------- */
+  .modal-overlay{
+    display:none; position:fixed; inset:0; background:rgba(18,25,58,0.5); z-index:100;
+    align-items:stretch; justify-content:flex-end;
+  }
+  .modal-overlay.open{display:flex;}
+  .modal-overlay.center{align-items:center; justify-content:center;}
+  .modal-overlay.left-align{justify-content:flex-start;}
+  .drawer{
+    width:520px; max-width:100vw; background:var(--paper); height:100%; overflow-y:auto;
+    box-shadow:-8px 0 30px rgba(18,25,58,0.2); animation:slideIn .18s ease-out;
+  }
+  .left-align .drawer{
+    box-shadow:8px 0 30px rgba(18,25,58,0.2); animation:slideInLeft .18s ease-out;
+  }
+  @keyframes slideInLeft{from{transform:translateX(-24px); opacity:0;} to{transform:translateX(0); opacity:1;}}
+  .mobile-nav-drawer{width:280px;}
+  .mobile-nav-list{padding:12px;}
+  .mobile-nav-list a{
+    display:block; padding:13px 14px; border-radius:8px; text-decoration:none; color:var(--ink);
+    font-weight:500; font-size:15px; margin-bottom:2px;
+  }
+  .mobile-nav-list a.active{background:var(--blue); color:#fff;}
+  .mobile-nav-list a:not(.active):active{background:var(--paper-dim);}
+  @keyframes slideIn{from{transform:translateX(24px); opacity:0;} to{transform:translateX(0); opacity:1;}}
+  .modal-box{
+    width:640px; max-width:calc(100vw - 32px); max-height:calc(100vh - 48px); overflow-y:auto;
+    background:var(--paper); border-radius:16px; box-shadow:0 20px 60px rgba(18,25,58,0.3);
+  }
+  .drawer-head{
+    display:flex; align-items:flex-start; justify-content:space-between; padding:24px 26px 18px;
+    border-bottom:1px solid var(--line); background:var(--paper); position:sticky; top:0;
+  }
+  .drawer-eyebrow{font-family:var(--mono); font-size:11px; text-transform:uppercase; letter-spacing:0.05em; color:var(--ink-soft); margin-bottom:4px;}
+  .drawer-head h2{font-family:var(--disp); font-size:21px; font-weight:600;}
+  .modal-close{background:var(--paper-dim); border:none; width:30px; height:30px; border-radius:50%; font-size:14px; color:var(--ink-soft); flex-shrink:0;}
+  .modal-close:hover{background:var(--line); color:var(--ink);}
+  .drawer-body{padding:22px 26px 32px;}
+
+  .req-warning{
+    background:rgba(245,158,11,0.1); border:1px solid rgba(245,158,11,0.35); border-radius:var(--radius);
+    padding:12px 14px; font-size:13px; color:var(--warning-dark); margin-bottom:18px; font-weight:500;
+  }
+  .req-improvements-title{font-weight:600; font-size:13.5px; margin-bottom:8px;}
+  .req-improvements ul{margin:0; padding-left:18px; line-height:1.55;}
+  .req-improvements li{margin-bottom:4px;}
+  .req-meta .m .v.missing{color:var(--warning-dark); font-size:15px;}
+  .req-meta{display:grid; grid-template-columns:repeat(2,1fr); gap:14px;}
+  .req-meta .m{background:#fff; border:1px solid var(--line); border-radius:var(--radius); padding:12px 14px;}
+  .req-meta .m .k{font-family:var(--mono); font-size:10.5px; text-transform:uppercase; color:var(--ink-soft); letter-spacing:0.04em;}
+  .req-meta .m .v{font-family:var(--disp); font-size:18px; font-weight:600; margin-top:4px;}
+
+  .candidate-list{display:flex; flex-direction:column; gap:8px;}
+  .candidate-item{
+    display:flex; align-items:center; gap:12px; background:#fff; border:1px solid var(--line); border-radius:var(--radius);
+    padding:12px 14px; cursor:pointer; transition:box-shadow .12s;
+  }
+  .candidate-item:hover{box-shadow:0 4px 14px rgba(18,25,58,0.08);}
+  .candidate-item .c-avatar{
+    width:36px; height:36px; border-radius:50%; background:var(--paper-dim); display:flex; align-items:center; justify-content:center;
+    font-family:var(--disp); font-weight:700; font-size:13px; color:var(--ink-soft); flex-shrink:0;
+  }
+  .candidate-item .c-info{flex:1;}
+  .candidate-item .c-name{font-weight:600; font-size:14px;}
+  .candidate-item .c-stage{font-size:12px; color:var(--ink-soft); margin-top:1px;}
+  .candidate-item .c-score{
+    font-family:var(--mono); font-weight:600; font-size:14px; padding:4px 10px; border-radius:20px; flex-shrink:0;
+  }
+  .c-score.high{background:rgba(40,81,255,0.12); color:var(--blue-dark);}
+  .c-score.mid{background:rgba(255,61,127,0.14); color:#B01050;}
+  .c-score.low{background:rgba(18,25,58,0.08); color:var(--ink-soft);}
+
+  .fit-score-block{display:flex; align-items:center; gap:22px; background:#fff; border:1px solid var(--line); border-radius:var(--radius); padding:18px;}
+  .fit-ring{position:relative; width:72px; height:72px; flex-shrink:0;}
+  .fit-ring svg{transform:rotate(-90deg);}
+  .fit-ring circle{fill:none; stroke-width:6;}
+  .fit-ring .bg{stroke:var(--paper-dim);}
+  .fit-ring .fg{stroke:var(--blue); stroke-linecap:round;}
+  .fit-ring-label{position:absolute; inset:0; display:flex; align-items:center; justify-content:center; font-family:var(--disp); font-weight:700; font-size:16px;}
+  .fit-breakdown{flex:1; display:flex; flex-direction:column; gap:8px;}
+  .fit-row{display:flex; align-items:center; gap:10px; font-size:12.5px;}
+  .fit-row .fit-label{width:110px; color:var(--ink-soft); flex-shrink:0;}
+  .fit-row .fit-bar{flex:1; height:6px; background:var(--paper-dim); border-radius:4px; overflow:hidden;}
+  .fit-row .fit-bar span{display:block; height:100%; background:var(--blue); border-radius:4px;}
+  .fit-row .fit-val{font-family:var(--mono); font-weight:600; width:32px; text-align:right; flex-shrink:0;}
+
+  .resume-preview{background:#fff; border:1px solid var(--line); border-radius:var(--radius); padding:20px; font-size:13px; line-height:1.65; color:var(--ink-soft);}
+  .resume-preview h3{font-family:var(--disp); font-size:15px; color:var(--ink); margin-bottom:2px;}
+  .resume-preview .r-role{font-size:12.5px; color:var(--blue); font-weight:600; margin-bottom:14px;}
+  .resume-preview .r-block{margin-bottom:12px;}
+  .resume-preview .r-block b{display:block; font-size:11px; text-transform:uppercase; letter-spacing:0.04em; color:var(--ink); margin-bottom:4px;}
+
+  .plan-current{
+    display:flex; align-items:center; justify-content:space-between; background:#fff; border:1px solid var(--line);
+    border-radius:var(--radius); padding:18px 20px;
+  }
+  .plan-current-name{font-family:var(--disp); font-weight:600; font-size:17px; display:flex; align-items:center;}
+  .plan-current-desc{font-size:12.5px; color:var(--ink-soft); margin-top:5px;}
+  .plan-current-price{font-family:var(--disp); font-size:22px; font-weight:700;}
+  .plan-current-price span{font-size:12px; font-weight:500; color:var(--ink-soft);}
+
+  .plan-grid{display:grid; grid-template-columns:1fr 1fr; gap:16px;}
+  .plan-card{background:#fff; border:1px solid var(--line); border-radius:var(--radius); padding:20px; display:flex; flex-direction:column;}
+  .plan-card-name{font-family:var(--disp); font-weight:600; font-size:16px;}
+  .plan-card-price{font-family:var(--disp); font-size:24px; font-weight:700; margin:6px 0 14px;}
+  .plan-card-price span{font-size:12px; font-weight:500; color:var(--ink-soft);}
+  .plan-card ul{list-style:none; margin-bottom:16px; flex:1;}
+  .plan-card li{font-size:13px; color:var(--ink-soft); padding:5px 0 5px 18px; position:relative;}
+  .plan-card li::before{content:"✓"; position:absolute; left:0; color:var(--blue); font-weight:700;}
+  .btn-secondary{
+    width:100%; padding:12px; background:none; color:var(--ink); border:1.5px solid var(--line); border-radius:var(--radius);
+    font-weight:600; font-size:14px;
+  }
+  .btn-secondary:hover{border-color:var(--ink);}
+
+  /* Genesys messenger — hidden until logged in */
+  body:not(.logged-in) #genesys-messenger,
+  body:not(.logged-in) #genesys-thirdparty,
+  body:not(.logged-in) #messenger{
+    display:none !important;
+    visibility:hidden !important;
+    pointer-events:none !important;
+  }
+  body.logged-in #genesys-messenger,
+  body.logged-in #genesys-thirdparty,
+  body.logged-in #messenger{
+    visibility:visible !important;
+    pointer-events:auto !important;
+  }
+
+  /* ============ MOBILE ============ */
+  @media (max-width:768px){
+    .login-wrap{grid-template-columns:1fr;}
+    .panel-brand{display:none;}
+    .panel-form{padding:0; background:var(--mobile-bg);}
+    .top-strip{background:var(--mobile-bg);}
+    .top-strip .brand-logo--light{display:none;}
+    .top-strip .brand-logo--dark{display:block; height:26px;}
+    .top-strip .tagline{display:none;}
+
+    .form-card.email-form{display:none;}
+    #login-view.has-continue-banner{background:var(--mobile-bg);}
+    .continue-conversation-banner.is-visible{
+      display:block; margin:0; padding:18px 20px; border-radius:0;
+      border:none; border-bottom:1.5px solid rgba(245,246,250,0.14);
+      background:var(--mobile-bg); color:var(--paper); cursor:pointer;
+      transition:background .15s;
+    }
+    .continue-conversation-banner.is-visible:active{background:#0f4294;}
+    .continue-conversation-banner.is-visible strong{color:var(--paper);}
+    .continue-conversation-banner.is-visible span{color:rgba(245,246,250,0.78);}
+    .continue-conversation-banner.show-hint .continue-conversation-hint{color:var(--sky);}
+
+    .pin-login{
+      display:flex; flex-direction:column; align-items:center; padding:36px 24px 28px; color:var(--paper);
+      max-width:420px; margin:0 auto; width:100%;
+    }
+    #login-view.has-continue-banner .pin-login{padding-top:52px;}
+    .pin-login h2{font-family:var(--disp); font-weight:600; font-size:18px; margin-bottom:26px; text-align:center;}
+    .pin-dots{display:flex; gap:18px; margin-bottom:8px;}
+    .pin-dots .d{width:14px; height:14px; border-radius:50%; border:1.5px solid rgba(246,244,239,0.5);}
+    .pin-dots .d.filled{background:var(--pink); border-color:var(--pink);}
+    .pin-error{font-family:var(--mono); font-size:11.5px; color:#F09891; height:18px; margin:10px 0 6px; text-align:center;}
+
+    .keypad{display:grid; grid-template-columns:repeat(3,1fr); gap:14px; margin-top:24px; width:100%; max-width:280px;}
+    .key{
+      aspect-ratio:1; border-radius:50%; border:none; background:rgba(245,246,250,0.06); color:var(--paper);
+      font-family:var(--disp); font-size:22px; font-weight:500; display:flex; align-items:center; justify-content:center;
+      transition:background .1s;
+    }
+    .key:active{background:rgba(245,246,250,0.16);}
+    .key.ghost{background:none;}
+    .key.clear{font-size:16px; color:var(--sky);}
+
+    .pin-card{margin:0 20px 20px; background:rgba(246,244,239,0.04); border-color:var(--line-light);}
+    .pin-card-head h3{color:var(--sky);}
+    .pin-card-desc{color:rgba(245,246,250,0.55);}
+    .pin-display{background:rgba(0,0,0,0.25);}
+
+    .dash-body{grid-template-columns:1fr;}
+    .sidebar{display:none;}
+    .stat-cards{grid-template-columns:repeat(2,1fr);}
+    table{display:block; overflow-x:auto;}
+    .search-bar{flex-direction:column;}
+    #job-status-filter{width:100%; padding:10px 12px;}
+    .drawer{width:100vw;}
+    .mobile-nav-drawer{width:78vw; max-width:300px;}
+    .modal-box{width:100vw; max-height:100vh; border-radius:0;}
+    .plan-grid{grid-template-columns:1fr;}
+    .req-meta{grid-template-columns:1fr 1fr;}
+    .plan-current{flex-direction:column; align-items:flex-start; gap:10px;}
+    .fit-score-block{flex-direction:column; align-items:flex-start;}
+    .plan-pill{display:none;}
+    .logout-link{display:none;}
+    .dash-user > .avatar{display:none;}
+    .profile-trigger{display:flex;}
+    .hamburger-btn{display:flex;}
+  }
+</style>
+</head>
+<body>
+
+<div id="app">
+
+  <!-- ================= LOGIN VIEW ================= -->
+  <div id="login-view">
+    <div class="top-strip">
+      <div class="brand">
+        <img class="brand-logo brand-logo--light" alt="SEEK">
+        <img class="brand-logo brand-logo--dark" alt="SEEK">
+      </div>
+      <div class="tagline">Employer portal</div>
+    </div>
+
+    <button type="button" class="continue-conversation-banner" id="continue-conversation-banner" aria-live="polite">
+      <strong id="continue-conversation-title"></strong>
+      <span id="continue-conversation-intent"></span>
+      <span class="continue-conversation-hint" id="continue-conversation-hint">Please login to continue conversation.</span>
+    </button>
+
+    <div class="login-wrap">
+      <div class="panel-brand">
+        <div class="lanes"></div>
+        <h1>Every hire has a <em>lane</em>.<br>Keep every one moving.</h1>
+        <p>Post roles, track candidates through each stage, and message applicants directly — all from one employer dashboard.</p>
+        <div class="stat-row">
+          <div class="stat"><b>128k+</b><span>Employers</span></div>
+          <div class="stat"><b>4.2 days</b><span>Avg. time to shortlist</span></div>
+          <div class="stat"><b>98.1%</b><span>Uptime</span></div>
+        </div>
+      </div>
+
+      <div class="panel-form">
+        <div class="form-card email-form">
+          <h2>Sign in to your portal</h2>
+          <div class="sub">Enter your employer account details to continue.</div>
+          <div class="field">
+            <label>Work email</label>
+            <input type="email" placeholder="you@company.com" id="email-input">
+          </div>
+          <div class="field">
+            <label>Password</label>
+            <input type="password" placeholder="••••••••" id="password-input">
+          </div>
+          <button class="btn-primary" onclick="login()">Sign in</button>
+          <div class="form-foot">Forgot your password? <a href="#">Reset it</a></div>
+        </div>
+
+        <div class="pin-login">
+          <h2>Enter your login PIN</h2>
+          <div class="pin-dots" id="pin-dots">
+            <div class="d"></div><div class="d"></div><div class="d"></div><div class="d"></div>
+          </div>
+          <div class="pin-error" id="pin-error"></div>
+          <div class="keypad" id="keypad"></div>
+        </div>
+
+        <div class="pin-card">
+          <div class="pin-card-head">
+            <h3>Session security PIN</h3>
+            <button class="toggle" id="pin-toggle" onclick="togglePin()"></button>
+          </div>
+          <div class="pin-card-desc">When enabled, a 4-digit verification code appears here for confirming your identity with SEEK support. It automatically refreshes every 5 minutes.</div>
+          <div class="pin-display" id="pin-display">
+            <div class="pin-digits" id="pin-digits">— — — —</div>
+            <div class="pin-meta">
+              <div class="ring">
+                <svg width="26" height="26"><circle class="bg" cx="13" cy="13" r="10"></circle><circle class="fg" id="ring-fg" cx="13" cy="13" r="10" stroke-dasharray="62.8" stroke-dashoffset="0"></circle></svg>
+              </div>
+              <div class="timer" id="pin-timer">5:00</div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ================= DASHBOARD VIEW ================= -->
+  <div id="dashboard-view">
+    <div class="dash-header">
+      <div class="dash-header-left">
+        <button class="hamburger-btn" onclick="openMobileNav()" aria-label="Open menu">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="18" x2="21" y2="18"/></svg>
+        </button>
+        <div class="brand">
+          <img class="brand-logo brand-logo--light" alt="SEEK">
+          <img class="brand-logo brand-logo--dark" alt="SEEK">
+        </div>
+      </div>
+      <div class="dash-user">
+        <button class="plan-pill" onclick="openSubscription()">Standard plan</button>
+        <a href="#" class="logout-link" onclick="logout(); return false;">Sign out</a>
+        <div class="avatar">SC</div>
+        <button class="profile-trigger" onclick="openProfile()">
+          <div class="avatar">SC</div>
+          <div class="profile-trigger-text">
+            <span class="profile-trigger-name">Sarah Chen</span>
+            <span class="profile-trigger-sub">Standard plan</span>
+          </div>
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"/></svg>
+        </button>
+      </div>
+    </div>
+    <div class="dash-body">
+      <div class="sidebar">
+        <div class="dash-mark"></div>
+        <nav>
+          <a href="#" class="active" data-page="overview" onclick="showDashPage('overview'); return false;">Overview</a>
+          <a href="#" data-page="job-ads" onclick="showDashPage('overview'); return false;">Job ads</a>
+          <a href="#" data-page="applicants" onclick="showDashPage('overview'); return false;">Applicants</a>
+          <a href="#" data-page="messages" onclick="showDashPage('overview'); return false;">Messages</a>
+          <a href="#" onclick="openSubscription(); return false;">Subscription</a>
+          <a href="#" data-page="faq" onclick="showDashPage('faq'); return false;">FAQ</a>
+          <a href="#" data-page="settings" onclick="showDashPage('overview'); return false;">Settings</a>
+        </nav>
+      </div>
+      <div class="main">
+        <div class="dash-page active" id="page-overview">
+        <h1>Welcome, Sarah</h1>
+        <div class="sub">Here's what's moving across your open roles today.</div>
+
+        <div class="stat-cards" id="stat-cards"></div>
+
+        <div class="section-title">Your job ads <button class="link add-job-btn" onclick="openAddJob()">+ Add job</button></div>
+        <div class="search-bar">
+          <div class="search-input">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+            <input type="text" id="job-search" placeholder="Search by role or location…" oninput="renderJobsTable()">
+          </div>
+          <select id="job-status-filter" onchange="renderJobsTable()">
+            <option value="all">All statuses</option>
+            <option value="open">Open</option>
+            <option value="closing">Closing soon</option>
+            <option value="paused">Paused</option>
+            <option value="draft">Draft</option>
+          </select>
+        </div>
+        <table>
+          <thead><tr><th>Role</th><th>Location</th><th>Applicants</th><th>Status</th><th>Posted</th></tr></thead>
+          <tbody id="jobs-tbody"></tbody>
+        </table>
+        <div class="table-empty" id="jobs-empty" style="display:none;">No job ads match your search.</div>
+        </div>
+
+        <div class="dash-page faq-page" id="page-faq">
+          <h1>FAQ</h1>
+          <div class="sub">Find answers to common questions about your employer account.</div>
+          <div id="genesys-support-center"></div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+</div>
+
+<!-- ================= Warnings drawer ================= -->
+<div class="modal-overlay" id="warn-overlay" onclick="if(event.target===this) closeWarnings()">
+  <div class="drawer">
+    <div class="drawer-head">
+      <div>
+        <div class="drawer-eyebrow">Attention needed</div>
+        <h2>Warnings</h2>
+      </div>
+      <button class="modal-close" onclick="closeWarnings()">✕</button>
+    </div>
+    <div class="drawer-body">
+      <div class="warning-list" id="warnings-drawer-list"></div>
+    </div>
+  </div>
+</div>
+
+<!-- ================= Requisition drawer ================= -->
+<div class="modal-overlay" id="req-overlay" onclick="if(event.target===this) closeReq()">
+  <div class="drawer">
+    <div class="drawer-head">
+      <div>
+        <div class="drawer-eyebrow">Requisition</div>
+        <h2 id="req-title">—</h2>
+      </div>
+      <button class="modal-close" onclick="closeReq()">✕</button>
+    </div>
+    <div class="drawer-body">
+      <div class="req-warning" id="req-warning-banner" style="display:none;"></div>
+      <div class="req-meta" id="req-meta"></div>
+      <div class="section-title" style="margin-top:22px;">Candidates <span class="link" id="req-candidate-count"></span></div>
+      <div class="candidate-list" id="candidate-list"></div>
+    </div>
+  </div>
+</div>
+
+<!-- ================= Candidate / resume drawer ================= -->
+<div class="modal-overlay" id="cand-overlay" onclick="if(event.target===this) closeCandidate()">
+  <div class="drawer">
+    <div class="drawer-head">
+      <div>
+        <div class="drawer-eyebrow">Candidate</div>
+        <h2 id="cand-name">—</h2>
+      </div>
+      <button class="modal-close" onclick="closeCandidate()">✕</button>
+    </div>
+    <div class="drawer-body">
+      <div class="fit-score-block">
+        <div class="fit-ring">
+          <svg width="72" height="72"><circle class="bg" cx="36" cy="36" r="30"></circle><circle class="fg" id="fit-ring-fg" cx="36" cy="36" r="30" stroke-dasharray="188.5" stroke-dashoffset="0"></circle></svg>
+          <div class="fit-ring-label" id="fit-score-num">—</div>
+        </div>
+        <div class="fit-breakdown" id="fit-breakdown"></div>
+      </div>
+      <div class="section-title" style="margin-top:22px;">Sample resume</div>
+      <div class="resume-preview" id="resume-preview"></div>
+    </div>
+  </div>
+</div>
+
+<!-- ================= Subscription modal ================= -->
+<div class="modal-overlay" id="sub-overlay" onclick="if(event.target===this) closeSubscription()">
+  <div class="modal-box">
+    <div class="drawer-head">
+      <div>
+        <div class="drawer-eyebrow">Your plan</div>
+        <h2>Subscription</h2>
+      </div>
+      <button class="modal-close" onclick="closeSubscription()">✕</button>
+    </div>
+    <div class="drawer-body">
+      <div class="plan-current">
+        <div>
+          <div class="plan-current-name">Standard <span class="badge open" style="margin-left:6px;">Active</span></div>
+          <div class="plan-current-desc">Active job ads · unlimited applicant messaging · standard support</div>
+        </div>
+        <div class="plan-current-price">$399<span>/mo</span></div>
+      </div>
+      <div class="section-title" style="margin-top:22px;">Available upgrades</div>
+      <div class="plan-grid">
+        <div class="plan-card">
+          <div class="plan-card-name">Growth</div>
+          <div class="plan-card-price">$799<span>/mo</span></div>
+          <ul>
+            <li>15 active job ads</li>
+            <li>Candidate fit scoring</li>
+            <li>Priority support</li>
+          </ul>
+          <button class="btn-primary" onclick="alert('This would start your upgrade to Growth.')">Upgrade to Growth</button>
+        </div>
+        <div class="plan-card">
+          <div class="plan-card-name">Enterprise</div>
+          <div class="plan-card-price">Custom</div>
+          <ul>
+            <li>Unlimited job ads</li>
+            <li>Dedicated account manager</li>
+            <li>API & ATS integration</li>
+          </ul>
+          <button class="btn-secondary" onclick="alert('This would open a request for Enterprise pricing.')">Talk to sales</button>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ================= Add job modal ================= -->
+<div class="modal-overlay" id="add-job-overlay" onclick="if(event.target===this) closeAddJob()">
+  <div class="modal-box">
+    <div class="drawer-head">
+      <div>
+        <div class="drawer-eyebrow">New requisition</div>
+        <h2>Add a job</h2>
+      </div>
+      <button class="modal-close" onclick="closeAddJob()">✕</button>
+    </div>
+    <div class="drawer-body">
+      <div class="field">
+        <label>Role title</label>
+        <input type="text" id="new-job-role" placeholder="e.g. Backend Engineer">
+      </div>
+      <div class="field">
+        <label>Location</label>
+        <input type="text" id="new-job-location" placeholder="e.g. Sydney, NSW or Remote">
+      </div>
+      <div class="field">
+        <label>Status</label>
+        <select id="new-job-status">
+          <option value="draft">Save as draft</option>
+          <option value="open">Publish now</option>
+        </select>
+      </div>
+      <div class="add-job-error" id="add-job-error"></div>
+      <button class="btn-primary" onclick="submitAddJob()">Create job</button>
+    </div>
+  </div>
+</div>
+
+<!-- ================= Profile sheet (mobile) ================= -->
+<div class="modal-overlay sheet-overlay" id="profile-overlay" onclick="if(event.target===this) closeProfile()">
+  <div class="sheet">
+    <div class="sheet-handle"></div>
+    <div class="sheet-profile">
+      <div class="avatar avatar-lg">SC</div>
+      <div>
+        <div class="sheet-name">Sarah Chen</div>
+        <div class="sheet-email">sarah.chen@company.com</div>
+      </div>
+    </div>
+    <div class="sheet-plan">
+      <span>Standard plan</span>
+      <span class="badge open">Active</span>
+    </div>
+    <div class="sheet-menu">
+      <button onclick="closeProfile(); openSubscription();">Manage subscription</button>
+      <button onclick="closeProfile();">Account settings</button>
+      <button class="sheet-signout" onclick="closeProfile(); logout();">Sign out</button>
+    </div>
+  </div>
+</div>
+
+<!-- ================= Mobile nav drawer ================= -->
+<div class="modal-overlay left-align" id="mobilenav-overlay" onclick="if(event.target===this) closeMobileNav()">
+  <div class="drawer mobile-nav-drawer">
+    <div class="drawer-head">
+      <div class="brand">
+        <img class="brand-logo brand-logo--light" alt="SEEK">
+      </div>
+      <button class="modal-close" onclick="closeMobileNav()">✕</button>
+    </div>
+    <nav class="mobile-nav-list">
+      <a href="#" class="active" data-page="overview" onclick="showDashPage('overview'); closeMobileNav(); return false;">Overview</a>
+      <a href="#" data-page="job-ads" onclick="showDashPage('overview'); closeMobileNav(); return false;">Job ads</a>
+      <a href="#" data-page="applicants" onclick="showDashPage('overview'); closeMobileNav(); return false;">Applicants</a>
+      <a href="#" data-page="messages" onclick="showDashPage('overview'); closeMobileNav(); return false;">Messages</a>
+      <a href="#" onclick="closeMobileNav(); openSubscription(); return false;">Subscription</a>
+      <a href="#" data-page="faq" onclick="showDashPage('faq'); closeMobileNav(); return false;">FAQ</a>
+      <a href="#" data-page="settings" onclick="showDashPage('overview'); closeMobileNav(); return false;">Settings</a>
+    </nav>
+  </div>
+</div>
+
+<script>
+  var SEEK_LOGO_LIGHT = 'data:image/svg+xml,%3Csvg%20version%3D%221.2%22%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20viewBox%3D%220%200%201527%20599%22%20width%3D%221527%22%20height%3D%22599%22%3E%0A%09%3Ctitle%3Eseeklogo-svg%3C%2Ftitle%3E%0A%09%3Cstyle%3E%0A%09%09.s0%20%7B%20fill%3A%20%23000000%20%7D%20%0A%09%09.s1%20%7B%20fill%3A%20%230d3880%20%7D%20%0A%09%3C%2Fstyle%3E%0A%09%3Cg%20id%3D%22Layer%22%3E%0A%09%09%3Cpath%20id%3D%22Layer%22%20fill-rule%3D%22evenodd%22%20class%3D%22s0%22%20d%3D%22m783%20406c-34%200-64.7-3.7-92-31.1l35.2-35.2c17.9%2017.8%2041.1%2020.3%2057.6%2020.3%2018.7%200%2038.1-6.2%2038.1-22.4%200-10.8-5.8-18.2-22.7-19.9l-34-3.3c-39-3.7-63-20.7-63-60.5%200-44.8%2039.3-68.8%2083.3-68.8%2033.5%200%2061.7%205.8%2082.4%2025.3l-33.1%2033.5c-12.4-11.2-31.5-14.5-50.2-14.5-21.5%200-30.6%2010-30.6%2020.8%200%207.8%203.3%2017%2022.4%2018.6l34%203.3c42.6%204.2%2064.2%2027%2064.2%2063.4%200%2047.7-40.6%2070.5-91.6%2070.5zm164.5-93.7c0%2027.8%2017%2048.1%2047.2%2048.1%2023.6%200%2035.3-6.6%2048.9-20.3l32.8%2031.9c-22%2022-43.1%2034-82.1%2034-51%200-99.8-23.2-99.8-110.7%200-70.4%2038.1-110.2%2094-110.2%2060.1%200%2094.1%2043.9%2094.1%20103.2v24c0%200-135.1%200-135.1%200zm77.1-60.1c-5.9-12.8-17.9-22.4-36.1-22.4-18.2%200-30.2%209.6-36%2022.4-3.4%207.9-4.6%2013.7-5%2023.2h82c-0.4-9.5-1.6-15.3-4.9-23.2zm135.5%2060.1c0%2027.8%2017%2048.1%2047.2%2048.1%2023.6%200%2035.2-6.6%2048.9-20.3l32.7%2031.9c-21.9%2022-43.1%2034-82%2034-51%200-99.9-23.2-99.9-110.7%200-70.4%2038.1-110.2%2094.1-110.2%2060.1%200%2094%2043.9%2094%20103.2v24c0%200-135%200-135%200zm77-60.1c-5.8-12.8-17.8-22.4-36-22.4-18.3%200-30.3%209.6-36.1%2022.4-3.3%207.9-4.5%2013.7-4.9%2023.2h82c-0.4-9.5-1.7-15.3-5-23.2zm223%20151.3l-53.1-90-22.8%2025.8v64.2h-53.8v-295.1h53.8v167.5l71.7-88.3h65.1l-77.1%2087%2082.9%20128.9c0%200-66.7%200-66.7%200z%22%2F%3E%0A%09%3C%2Fg%3E%0A%09%3Cpath%20id%3D%22Layer%22%20fill-rule%3D%22evenodd%22%20class%3D%22s1%22%20d%3D%22m299.5%20598.2c-165.1%200-298.6-133.5-298.6-298.6%200-165.2%20133.5-298.7%20298.6-298.7%20165.2%200%20298.7%20133.5%20298.7%20298.7%200%20165.1-133.5%20298.6-298.7%20298.6zm-232-232.4c0-2.6-2-4.7-4.6-4.7-2.6%200-4.7%202.1-4.7%204.7%200%202.6%202.1%204.7%204.7%204.7%202.6%200%204.6-2.1%204.6-4.7zm0-62.7c0-2.6-2-4.7-4.6-4.7-2.6%200-4.7%202.1-4.7%204.7%200%202.5%202.1%204.6%204.7%204.6%202.6%200%204.6-2.1%204.6-4.6zm0-62.8c0-2.6-2-4.7-4.6-4.7-2.6%200-4.7%202.1-4.7%204.7%200%202.6%202.1%204.7%204.7%204.7%202.6%200%204.6-2.1%204.6-4.7zm34.6%20125.5c0-3.8-3.2-7-7-7-3.9%200-7%203.2-7%207%200%203.9%203.1%207%207%207%203.9%200%207-3.1%207-7zm0-62.7c0-3.9-3.2-7-7-7-3.9%200-7%203.1-7%207%200%203.8%203.1%206.9%207%206.9%203.9%200%207-3.1%207-6.9zm0-62.8c0-3.9-3.2-7-7-7-3.9%200-7%203.1-7%207%200%203.9%203.1%207%207%207%203.9%200%207-3.1%207-7zm40%20125.5c0-5.1-4.2-9.3-9.3-9.3-5.2%200-9.4%204.2-9.4%209.3%200%205.2%204.2%209.4%209.4%209.4%205.1%200%209.3-4.2%209.3-9.4zm0-62.8c0-5.1-4.2-9.3-9.3-9.3-5.2%200-9.4%204.2-9.4%209.3%200%205.2%204.2%209.4%209.4%209.4%205.1%200%209.3-4.2%209.3-9.4zm0-62.7c0-5.2-4.2-9.3-9.3-9.3-5.2%200-9.4%204.1-9.4%209.3%200%205.2%204.2%209.3%209.4%209.3%205.1%200%209.3-4.1%209.3-9.3zm42%20125.5c0-6.4-5.3-11.6-11.7-11.6-6.5%200-11.7%205.2-11.7%2011.6%200%206.5%205.2%2011.7%2011.7%2011.7%206.4%200%2011.7-5.2%2011.7-11.7zm0-62.7c0-6.5-5.3-11.7-11.7-11.7-6.5%200-11.7%205.2-11.7%2011.7%200%206.4%205.2%2011.6%2011.7%2011.6%206.4%200%2011.7-5.2%2011.7-11.6zm0-62.8c0-6.4-5.3-11.7-11.7-11.7-6.5%200-11.7%205.3-11.7%2011.7%200%206.5%205.2%2011.7%2011.7%2011.7%206.4%200%2011.7-5.2%2011.7-11.7zm48.7%20125.5c0-7.7-6.2-14-14-14-7.7%200-14%206.3-14%2014%200%207.8%206.3%2014%2014%2014%207.8%200%2014-6.2%2014-14zm0-62.7c0-7.8-6.2-14-14-14-7.7%200-14%206.2-14%2014%200%207.7%206.3%2014%2014%2014%207.8%200%2014-6.3%2014-14zm0-62.8c0-7.7-6.2-14-14-14-7.7%200-14%206.3-14%2014%200%207.8%206.3%2014%2014%2014%207.8%200%2014-6.2%2014-14zm51%20125.5c0-9-7.3-16.3-16.4-16.3-9%200-16.3%207.3-16.3%2016.3%200%209%207.3%2016.3%2016.3%2016.3%209.1%200%2016.4-7.3%2016.4-16.3zm0-62.7c0-9.1-7.3-16.4-16.4-16.4-9%200-16.3%207.3-16.3%2016.4%200%209%207.3%2016.3%2016.3%2016.3%209.1%200%2016.4-7.3%2016.4-16.3zm0-62.8c0-9-7.3-16.3-16.4-16.3-9%200-16.3%207.3-16.3%2016.3%200%209%207.3%2016.3%2016.3%2016.3%209.1%200%2016.4-7.3%2016.4-16.3zm60.1%20251.1c0-10.4-8.3-18.7-18.7-18.7-10.3%200-18.6%208.3-18.6%2018.7%200%2010.3%208.3%2018.6%2018.6%2018.6%2010.4%200%2018.7-8.3%2018.7-18.6zm0-62.8c0-10.4-8.3-18.7-18.7-18.7-10.3%200-18.6%208.3-18.6%2018.7%200%2010.3%208.3%2018.7%2018.6%2018.7%2010.4%200%2018.7-8.4%2018.7-18.7zm0-62.8c0-10.3-8.3-18.6-18.7-18.6-10.3%200-18.6%208.3-18.6%2018.6%200%2010.3%208.3%2018.7%2018.6%2018.7%2010.4%200%2018.7-8.4%2018.7-18.7zm0-62.7c0-10.3-8.3-18.7-18.7-18.7-10.3%200-18.6%208.4-18.6%2018.7%200%2010.3%208.3%2018.6%2018.6%2018.6%2010.4%200%2018.7-8.3%2018.7-18.6zm0-62.8c0-10.3-8.3-18.6-18.7-18.6-10.3%200-18.6%208.3-18.6%2018.6%200%2010.3%208.3%2018.7%2018.6%2018.7%2010.4%200%2018.7-8.4%2018.7-18.7zm0-62.7c0-10.4-8.3-18.7-18.7-18.7-10.3%200-18.6%208.3-18.6%2018.7%200%2010.3%208.3%2018.6%2018.6%2018.6%2010.4%200%2018.7-8.3%2018.7-18.6zm0-62.8c0-10.3-8.3-18.7-18.7-18.7-10.3%200-18.6%208.4-18.6%2018.7%200%2010.3%208.3%2018.6%2018.6%2018.6%2010.4%200%2018.7-8.3%2018.7-18.6zm61.9%20313.8c0-11.4-9.2-20.6-20.6-20.6-11.4%200-20.6%209.2-20.6%2020.6%200%2011.4%209.2%2020.6%2020.6%2020.6%2011.4%200%2020.6-9.2%2020.6-20.6zm0-62.8c0-11.4-9.2-20.6-20.6-20.6-11.4%200-20.6%209.2-20.6%2020.6%200%2011.4%209.2%2020.6%2020.6%2020.6%2011.4%200%2020.6-9.2%2020.6-20.6zm0-62.7c0-11.4-9.2-20.6-20.6-20.6-11.4%200-20.6%209.2-20.6%2020.6%200%2011.4%209.2%2020.6%2020.6%2020.6%2011.4%200%2020.6-9.2%2020.6-20.6zm0-62.8c0-11.4-9.2-20.6-20.6-20.6-11.4%200-20.6%209.2-20.6%2020.6%200%2011.4%209.2%2020.6%2020.6%2020.6%2011.4%200%2020.6-9.2%2020.6-20.6zm0-62.8c0-11.3-9.2-20.6-20.6-20.6-11.4%200-20.6%209.3-20.6%2020.6%200%2011.4%209.2%2020.6%2020.6%2020.6%2011.4%200%2020.6-9.2%2020.6-20.6zm66.9%20188.5c0-12.8-10.4-23.1-23.1-23.1-12.8%200-23.1%2010.3-23.1%2023.1%200%2012.8%2010.3%2023.1%2023.1%2023.1%2012.7%200%2023.1-10.3%2023.1-23.1zm0-62.8c0-12.7-10.4-23.1-23.1-23.1-12.8%200-23.1%2010.4-23.1%2023.1%200%2012.8%2010.3%2023.2%2023.1%2023.2%2012.7%200%2023.1-10.4%2023.1-23.2zm0-62.7c0-12.8-10.4-23.1-23.1-23.1-12.8%200-23.1%2010.3-23.1%2023.1%200%2012.8%2010.3%2023.1%2023.1%2023.1%2012.7%200%2023.1-10.3%2023.1-23.1zm67.8%2063.2c0-14-11.3-25.4-25.3-25.4-14%200-25.4%2011.4-25.4%2025.4%200%2014%2011.4%2025.3%2025.4%2025.3%2014%200%2025.3-11.3%2025.3-25.3z%22%2F%3E%0A%3C%2Fsvg%3E';
+  var SEEK_LOGO_DARK = 'data:image/svg+xml,%3Csvg%20version%3D%221.2%22%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20viewBox%3D%220%200%201527%20599%22%20width%3D%221527%22%20height%3D%22599%22%3E%0A%09%3Ctitle%3Eseeklogo-svg%3C%2Ftitle%3E%0A%09%3Cstyle%3E%0A%09%09.s0%20%7B%20fill%3A%20%23ffffff%20%7D%20%0A%09%09.s1%20%7B%20fill%3A%20%23ffffff%20%7D%20%0A%09%3C%2Fstyle%3E%0A%09%3Cg%20id%3D%22Layer%22%3E%0A%09%09%3Cpath%20id%3D%22Layer%22%20fill-rule%3D%22evenodd%22%20class%3D%22s0%22%20d%3D%22m783%20406c-34%200-64.7-3.7-92-31.1l35.2-35.2c17.9%2017.8%2041.1%2020.3%2057.6%2020.3%2018.7%200%2038.1-6.2%2038.1-22.4%200-10.8-5.8-18.2-22.7-19.9l-34-3.3c-39-3.7-63-20.7-63-60.5%200-44.8%2039.3-68.8%2083.3-68.8%2033.5%200%2061.7%205.8%2082.4%2025.3l-33.1%2033.5c-12.4-11.2-31.5-14.5-50.2-14.5-21.5%200-30.6%2010-30.6%2020.8%200%207.8%203.3%2017%2022.4%2018.6l34%203.3c42.6%204.2%2064.2%2027%2064.2%2063.4%200%2047.7-40.6%2070.5-91.6%2070.5zm164.5-93.7c0%2027.8%2017%2048.1%2047.2%2048.1%2023.6%200%2035.3-6.6%2048.9-20.3l32.8%2031.9c-22%2022-43.1%2034-82.1%2034-51%200-99.8-23.2-99.8-110.7%200-70.4%2038.1-110.2%2094-110.2%2060.1%200%2094.1%2043.9%2094.1%20103.2v24c0%200-135.1%200-135.1%200zm77.1-60.1c-5.9-12.8-17.9-22.4-36.1-22.4-18.2%200-30.2%209.6-36%2022.4-3.4%207.9-4.6%2013.7-5%2023.2h82c-0.4-9.5-1.6-15.3-4.9-23.2zm135.5%2060.1c0%2027.8%2017%2048.1%2047.2%2048.1%2023.6%200%2035.2-6.6%2048.9-20.3l32.7%2031.9c-21.9%2022-43.1%2034-82%2034-51%200-99.9-23.2-99.9-110.7%200-70.4%2038.1-110.2%2094.1-110.2%2060.1%200%2094%2043.9%2094%20103.2v24c0%200-135%200-135%200zm77-60.1c-5.8-12.8-17.8-22.4-36-22.4-18.3%200-30.3%209.6-36.1%2022.4-3.3%207.9-4.5%2013.7-4.9%2023.2h82c-0.4-9.5-1.7-15.3-5-23.2zm223%20151.3l-53.1-90-22.8%2025.8v64.2h-53.8v-295.1h53.8v167.5l71.7-88.3h65.1l-77.1%2087%2082.9%20128.9c0%200-66.7%200-66.7%200z%22%2F%3E%0A%09%3C%2Fg%3E%0A%09%3Cpath%20id%3D%22Layer%22%20fill-rule%3D%22evenodd%22%20class%3D%22s1%22%20d%3D%22m299.5%20598.2c-165.1%200-298.6-133.5-298.6-298.6%200-165.2%20133.5-298.7%20298.6-298.7%20165.2%200%20298.7%20133.5%20298.7%20298.7%200%20165.1-133.5%20298.6-298.7%20298.6zm-232-232.4c0-2.6-2-4.7-4.6-4.7-2.6%200-4.7%202.1-4.7%204.7%200%202.6%202.1%204.7%204.7%204.7%202.6%200%204.6-2.1%204.6-4.7zm0-62.7c0-2.6-2-4.7-4.6-4.7-2.6%200-4.7%202.1-4.7%204.7%200%202.5%202.1%204.6%204.7%204.6%202.6%200%204.6-2.1%204.6-4.6zm0-62.8c0-2.6-2-4.7-4.6-4.7-2.6%200-4.7%202.1-4.7%204.7%200%202.6%202.1%204.7%204.7%204.7%202.6%200%204.6-2.1%204.6-4.7zm34.6%20125.5c0-3.8-3.2-7-7-7-3.9%200-7%203.2-7%207%200%203.9%203.1%207%207%207%203.9%200%207-3.1%207-7zm0-62.7c0-3.9-3.2-7-7-7-3.9%200-7%203.1-7%207%200%203.8%203.1%206.9%207%206.9%203.9%200%207-3.1%207-6.9zm0-62.8c0-3.9-3.2-7-7-7-3.9%200-7%203.1-7%207%200%203.9%203.1%207%207%207%203.9%200%207-3.1%207-7zm40%20125.5c0-5.1-4.2-9.3-9.3-9.3-5.2%200-9.4%204.2-9.4%209.3%200%205.2%204.2%209.4%209.4%209.4%205.1%200%209.3-4.2%209.3-9.4zm0-62.8c0-5.1-4.2-9.3-9.3-9.3-5.2%200-9.4%204.2-9.4%209.3%200%205.2%204.2%209.4%209.4%209.4%205.1%200%209.3-4.2%209.3-9.4zm0-62.7c0-5.2-4.2-9.3-9.3-9.3-5.2%200-9.4%204.1-9.4%209.3%200%205.2%204.2%209.3%209.4%209.3%205.1%200%209.3-4.1%209.3-9.3zm42%20125.5c0-6.4-5.3-11.6-11.7-11.6-6.5%200-11.7%205.2-11.7%2011.6%200%206.5%205.2%2011.7%2011.7%2011.7%206.4%200%2011.7-5.2%2011.7-11.7zm0-62.7c0-6.5-5.3-11.7-11.7-11.7-6.5%200-11.7%205.2-11.7%2011.7%200%206.4%205.2%2011.6%2011.7%2011.6%206.4%200%2011.7-5.2%2011.7-11.6zm0-62.8c0-6.4-5.3-11.7-11.7-11.7-6.5%200-11.7%205.3-11.7%2011.7%200%206.5%205.2%2011.7%2011.7%2011.7%206.4%200%2011.7-5.2%2011.7-11.7zm48.7%20125.5c0-7.7-6.2-14-14-14-7.7%200-14%206.3-14%2014%200%207.8%206.3%2014%2014%2014%207.8%200%2014-6.2%2014-14zm0-62.7c0-7.8-6.2-14-14-14-7.7%200-14%206.2-14%2014%200%207.7%206.3%2014%2014%2014%207.8%200%2014-6.3%2014-14zm0-62.8c0-7.7-6.2-14-14-14-7.7%200-14%206.3-14%2014%200%207.8%206.3%2014%2014%2014%207.8%200%2014-6.2%2014-14zm51%20125.5c0-9-7.3-16.3-16.4-16.3-9%200-16.3%207.3-16.3%2016.3%200%209%207.3%2016.3%2016.3%2016.3%209.1%200%2016.4-7.3%2016.4-16.3zm0-62.7c0-9.1-7.3-16.4-16.4-16.4-9%200-16.3%207.3-16.3%2016.4%200%209%207.3%2016.3%2016.3%2016.3%209.1%200%2016.4-7.3%2016.4-16.3zm0-62.8c0-9-7.3-16.3-16.4-16.3-9%200-16.3%207.3-16.3%2016.3%200%209%207.3%2016.3%2016.3%2016.3%209.1%200%2016.4-7.3%2016.4-16.3zm60.1%20251.1c0-10.4-8.3-18.7-18.7-18.7-10.3%200-18.6%208.3-18.6%2018.7%200%2010.3%208.3%2018.6%2018.6%2018.6%2010.4%200%2018.7-8.3%2018.7-18.6zm0-62.8c0-10.4-8.3-18.7-18.7-18.7-10.3%200-18.6%208.3-18.6%2018.7%200%2010.3%208.3%2018.7%2018.6%2018.7%2010.4%200%2018.7-8.4%2018.7-18.7zm0-62.8c0-10.3-8.3-18.6-18.7-18.6-10.3%200-18.6%208.3-18.6%2018.6%200%2010.3%208.3%2018.7%2018.6%2018.7%2010.4%200%2018.7-8.4%2018.7-18.7zm0-62.7c0-10.3-8.3-18.7-18.7-18.7-10.3%200-18.6%208.4-18.6%2018.7%200%2010.3%208.3%2018.6%2018.6%2018.6%2010.4%200%2018.7-8.3%2018.7-18.6zm0-62.8c0-10.3-8.3-18.6-18.7-18.6-10.3%200-18.6%208.3-18.6%2018.6%200%2010.3%208.3%2018.7%2018.6%2018.7%2010.4%200%2018.7-8.4%2018.7-18.7zm0-62.7c0-10.4-8.3-18.7-18.7-18.7-10.3%200-18.6%208.3-18.6%2018.7%200%2010.3%208.3%2018.6%2018.6%2018.6%2010.4%200%2018.7-8.3%2018.7-18.6zm0-62.8c0-10.3-8.3-18.7-18.7-18.7-10.3%200-18.6%208.4-18.6%2018.7%200%2010.3%208.3%2018.6%2018.6%2018.6%2010.4%200%2018.7-8.3%2018.7-18.6zm61.9%20313.8c0-11.4-9.2-20.6-20.6-20.6-11.4%200-20.6%209.2-20.6%2020.6%200%2011.4%209.2%2020.6%2020.6%2020.6%2011.4%200%2020.6-9.2%2020.6-20.6zm0-62.8c0-11.4-9.2-20.6-20.6-20.6-11.4%200-20.6%209.2-20.6%2020.6%200%2011.4%209.2%2020.6%2020.6%2020.6%2011.4%200%2020.6-9.2%2020.6-20.6zm0-62.7c0-11.4-9.2-20.6-20.6-20.6-11.4%200-20.6%209.2-20.6%2020.6%200%2011.4%209.2%2020.6%2020.6%2020.6%2011.4%200%2020.6-9.2%2020.6-20.6zm0-62.8c0-11.4-9.2-20.6-20.6-20.6-11.4%200-20.6%209.2-20.6%2020.6%200%2011.4%209.2%2020.6%2020.6%2020.6%2011.4%200%2020.6-9.2%2020.6-20.6zm0-62.8c0-11.3-9.2-20.6-20.6-20.6-11.4%200-20.6%209.3-20.6%2020.6%200%2011.4%209.2%2020.6%2020.6%2020.6%2011.4%200%2020.6-9.2%2020.6-20.6zm66.9%20188.5c0-12.8-10.4-23.1-23.1-23.1-12.8%200-23.1%2010.3-23.1%2023.1%200%2012.8%2010.3%2023.1%2023.1%2023.1%2012.7%200%2023.1-10.3%2023.1-23.1zm0-62.8c0-12.7-10.4-23.1-23.1-23.1-12.8%200-23.1%2010.4-23.1%2023.1%200%2012.8%2010.3%2023.2%2023.1%2023.2%2012.7%200%2023.1-10.4%2023.1-23.2zm0-62.7c0-12.8-10.4-23.1-23.1-23.1-12.8%200-23.1%2010.3-23.1%2023.1%200%2012.8%2010.3%2023.1%2023.1%2023.1%2012.7%200%2023.1-10.3%2023.1-23.1zm67.8%2063.2c0-14-11.3-25.4-25.3-25.4-14%200-25.4%2011.4-25.4%2025.4%200%2014%2011.4%2025.3%2025.4%2025.3%2014%200%2025.3-11.3%2025.3-25.3z%22%2F%3E%0A%3C%2Fsvg%3E';
+  function initSeekLogos(){
+    document.querySelectorAll('.brand-logo--light').forEach(function(el){ el.src = SEEK_LOGO_LIGHT; });
+    document.querySelectorAll('.brand-logo--dark').forEach(function(el){ el.src = SEEK_LOGO_DARK; });
+  }
+
+  function getConversationIdFromUrl(){
+    return new URLSearchParams(window.location.search).get('conversationId') || '';
+  }
+
+  var conversationId = getConversationIdFromUrl();
+
+  function buildSeekCustomAttributesFromUrl(){
+    var cid = getConversationIdFromUrl();
+    return cid ? { conversationId: cid } : {};
+  }
+
+  function initContinueConversationBanner(){
+    var banner = document.getElementById('continue-conversation-banner');
+    var loginView = document.getElementById('login-view');
+    if(!banner) return;
+
+    var cid = getConversationIdFromUrl();
+    if(!cid){
+      banner.classList.remove('is-visible');
+      if(loginView) loginView.classList.remove('has-continue-banner');
+      return;
+    }
+
+    document.getElementById('continue-conversation-title').textContent =
+      'Continue conversation, Sarah';
+    document.getElementById('continue-conversation-intent').textContent =
+      'Intent: Job Support';
+    banner.classList.add('is-visible');
+    if(loginView) loginView.classList.add('has-continue-banner');
+
+    banner.onclick = function(){
+      banner.classList.add('show-hint');
+    };
+  }
+
+  function setSeekGenesysCustomAttributes(){
+    if(typeof Genesys !== 'function') return;
+
+    var customAttributes = buildSeekCustomAttributesFromUrl();
+    var payload = { messaging: { customAttributes: customAttributes } };
+
+    console.log('[Seek] Database.set — customAttributes from URL', {
+      href: window.location.href,
+      conversationId: getConversationIdFromUrl(),
+      customAttributes: customAttributes,
+      payload: payload
+    });
+
+    Genesys('command', 'Database.set', payload,
+      function(res){
+        console.log('[Seek] Database.set success', { customAttributes: customAttributes, response: res });
+      },
+      function(err){
+        console.warn('[Seek] Database.set failed', { customAttributes: customAttributes, error: err });
+      }
+    );
+  }
+
+  function openSeekContinueConversationToaster(){
+    if(!getConversationIdFromUrl()) return;
+    if(!document.body.classList.contains('logged-in')) return;
+    if(window.__seekContinueToasterShown) return;
+    if(typeof Genesys !== 'function') return;
+
+    window.__seekContinueToasterShown = true;
+
+    Genesys('command', 'Toaster.open', {
+      title: 'Welcome back, Sarah',
+      body: 'Continue conversation',
+      buttons: {
+        type: 'binary',
+        primary: 'Start here',
+        secondary: 'Maybe Later'
+      }
+    },
+    function(){
+      console.log('[Seek] Continue conversation toaster opened');
+    },
+    function(error){
+      window.__seekContinueToasterShown = false;
+      console.warn('[Seek] Toaster.open failed', error);
+    });
+  }
+
+  function registerSeekGenesysHandlers(){
+    if(window.__seekGenesysHandlersRegistered) return;
+    window.__seekGenesysHandlersRegistered = true;
+
+    Genesys('subscribe', 'Messenger.opened', function(){
+      console.log('[Seek] Messenger.opened — applying URL customAttributes');
+      setSeekGenesysCustomAttributes();
+    });
+
+    Genesys('subscribe', 'Toaster.ready', function(){
+      openSeekContinueConversationToaster();
+    });
+
+    Genesys('subscribe', 'Toaster.accepted', function(){
+      if(!getConversationIdFromUrl()) return;
+      Genesys('command', 'Messenger.open',
+        function(){
+          console.log('[Seek] Messenger opened from continue conversation toaster');
+        },
+        function(error){
+          console.warn('[Seek] Messenger.open failed', error);
+        }
+      );
+    });
+  }
+
+  function loadGenesysMessenger(){
+    if(window.__seekGenesysLoaded) return;
+    window.__seekGenesysLoaded = true;
+    (function (g, e, n, es, ys) {
+      g['_genesysJs'] = e;
+      g[e] = g[e] || function () {
+        (g[e].q = g[e].q || []).push(arguments);
+      };
+      g[e].t = 1 * new Date();
+      g[e].c = es;
+      ys = document.createElement('script'); ys.async = 1; ys.src = n; ys.charset = 'utf-8'; document.head.appendChild(ys);
+    })(window, 'Genesys', 'https://apps.mypurecloud.com.au/genesys-bootstrap/genesys.min.js', {
+      environment: 'prod-apse2',
+      deploymentId: 'e3ad774d-1b5a-4994-a3a1-fe7c8fb41f83'
+    });
+    registerSeekGenesysHandlers();
+  }
+
+  let pinOn = false;
+  let pinValue = '';
+  let secondsLeft = 300;
+  let pinTimerHandle = null;
+  const RING_CIRC = 62.8;
+
+  function randomPin(){
+    return String(Math.floor(1000 + Math.random()*9000));
+  }
+
+  function renderPin(){
+    document.getElementById('pin-digits').textContent = pinValue.split('').join(' ');
+    const m = Math.floor(secondsLeft/60), s = secondsLeft%60;
+    document.getElementById('pin-timer').textContent = m + ':' + String(s).padStart(2,'0');
+    const offset = RING_CIRC * (1 - secondsLeft/300);
+    document.getElementById('ring-fg').style.strokeDashoffset = offset;
+  }
+
+  function tickPin(){
+    secondsLeft--;
+    if(secondsLeft <= 0){
+      pinValue = randomPin();
+      secondsLeft = 300;
+    }
+    renderPin();
+  }
+
+  function togglePin(){
+    pinOn = !pinOn;
+    const toggle = document.getElementById('pin-toggle');
+    const display = document.getElementById('pin-display');
+    toggle.classList.toggle('on', pinOn);
+    display.classList.toggle('show', pinOn);
+    if(pinOn){
+      pinValue = randomPin();
+      secondsLeft = 300;
+      renderPin();
+      pinTimerHandle = setInterval(tickPin, 1000);
+    } else {
+      clearInterval(pinTimerHandle);
+    }
+  }
+
+  const keypad = document.getElementById('keypad');
+  const keys = ['1','2','3','4','5','6','7','8','9','','0','clear'];
+  keys.forEach(k => {
+    const btn = document.createElement('button');
+    if(k === ''){ btn.className = 'key ghost'; }
+    else if(k === 'clear'){ btn.className = 'key clear'; btn.textContent = '⌫'; btn.onclick = clearDigit; }
+    else { btn.className = 'key'; btn.textContent = k; btn.onclick = () => enterDigit(k); }
+    keypad.appendChild(btn);
+  });
+
+  let enteredPin = '';
+  const DEMO_PIN = '1114';
+
+  function updateDots(){
+    document.querySelectorAll('#pin-dots .d').forEach((d, i) => {
+      d.classList.toggle('filled', i < enteredPin.length);
+    });
+  }
+
+  function enterDigit(d){
+    if(enteredPin.length >= 4) return;
+    enteredPin += d;
+    updateDots();
+    document.getElementById('pin-error').textContent = '';
+    if(enteredPin.length === 4){
+      setTimeout(() => {
+        if(enteredPin === DEMO_PIN){
+          login();
+        } else {
+          document.getElementById('pin-error').textContent = 'Incorrect PIN — try again';
+          enteredPin = '';
+          updateDots();
+        }
+      }, 150);
+    }
+  }
+  function clearDigit(){
+    enteredPin = enteredPin.slice(0, -1);
+    updateDots();
+  }
+
+  const requisitions = [
+    {
+      id:'req1', role:'Early Childhood Educator (Open requ)', location:'Sydney, NSW', applicants:64, status:'open', posted:'3 days ago',
+      salaryRange: null,
+      improvements: [
+        'Add a salary range',
+        'Strengthen the job title',
+        'Broaden the job description',
+        'Specify work rights'
+      ],
+      candidates:[
+        { id:'c1', name:'Amelia Ross', stage:'Interview', score:91,
+          breakdown:[['Skills match',94],['Experience',88],['Location fit',100]],
+          resume:{ role:'Senior Frontend Engineer', experience:'6 yrs React, TypeScript, design systems at two Sydney scale-ups.', education:"B.Sc Computer Science, UNSW", highlight:'Led the migration of a 40-engineer org to a shared component library.' } },
+        { id:'c2', name:'Daniel Wu', stage:'Screened', score:78,
+          breakdown:[['Skills match',80],['Experience',72],['Location fit',85]],
+          resume:{ role:'Senior Frontend Engineer', experience:'4 yrs frontend, mostly Vue with some React exposure.', education:"B.IT, UTS", highlight:'Shipped a customer-facing dashboard used by 12k merchants.' } },
+        { id:'c3', name:'Priya Nair', stage:'Applied', score:64,
+          breakdown:[['Skills match',60],['Experience',68],['Location fit',70]],
+          resume:{ role:'Senior Frontend Engineer', experience:'3 yrs full-stack, JS-heavy with limited React depth.', education:"B.Eng Software, Monash", highlight:'Built and maintained an internal admin tool end-to-end.' } }
+      ]
+    },
+    {
+      id:'req5', role:'Childcare Director', location:'Sydney, NSW', applicants:0, status:'draft', posted:'Not yet posted',
+      warning:null, candidates:[]
+    }
+  ];
+  let reqCounter = 6;
+
+  function statusBadge(status){
+    if(status === 'open') return '<span class="badge open">Open</span>';
+    if(status === 'closing') return '<span class="badge closing">Closing soon</span>';
+    if(status === 'draft') return '<span class="badge draft">Draft</span>';
+    return '<span class="badge paused">Paused</span>';
+  }
+
+  function scoreClass(score){
+    if(score >= 85) return 'high';
+    if(score >= 70) return 'mid';
+    return 'low';
+  }
+
+  function getReqWarnings(r){
+    const warnings = [];
+    if(Array.isArray(r.improvements) && r.improvements.length){
+      warnings.push(...r.improvements);
+    } else if(r.warning){
+      warnings.push(r.warning);
+    }
+    if(!Array.isArray(r.improvements) || !r.improvements.length){
+      const lowCount = r.candidates.filter(c => c.score < 70).length;
+      if(lowCount > 0){
+        warnings.push(`${lowCount} low-quality candidate${lowCount > 1 ? 's' : ''} — below your fit threshold, review before shortlisting.`);
+      }
+    }
+    return warnings;
+  }
+
+  function renderReqImprovements(r){
+    if(!Array.isArray(r.improvements) || !r.improvements.length) return '';
+    return `
+      <div class="req-improvements">
+        <div class="req-improvements-title">Suggested improvements</div>
+        <ul>${r.improvements.map(item => `<li>${item}</li>`).join('')}</ul>
+      </div>
+    `;
+  }
+
+  const iconBriefcase = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="7" width="20" height="14" rx="2"/><path d="M16 21V5a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v16"/></svg>';
+  const iconPeople = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>';
+  const iconWarning = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M10.29 3.86 1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0Z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>';
+  const iconDraft = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.12 2.12 0 0 1 3 3L12 15l-4 1 1-4Z"/></svg>';
+
+  function renderStats(){
+    const openCount = requisitions.filter(r => r.status === 'open' || r.status === 'closing').length;
+    const applied = requisitions.reduce((sum, r) => sum + r.applicants, 0);
+    const warnCount = requisitions.filter(r => getReqWarnings(r).length > 0).length;
+    const draftCount = requisitions.filter(r => r.status === 'draft').length;
+
+    document.getElementById('stat-cards').innerHTML = `
+      <div class="card">
+        <div class="c-icon">${iconBriefcase}</div>
+        <div class="k">Open jobs</div>
+        <div class="v">${openCount}</div>
+        <div class="delta">Live right now</div>
+      </div>
+      <div class="card">
+        <div class="c-icon">${iconPeople}</div>
+        <div class="k">Candidates applied</div>
+        <div class="v">${applied}</div>
+        <div class="delta">Across all jobs</div>
+      </div>
+      <div class="card card-warn ${warnCount ? 'card-clickable' : ''}" ${warnCount ? 'onclick="openWarnings()"' : ''}>
+        <div class="c-icon">${iconWarning}</div>
+        <div class="k">Warnings</div>
+        <div class="v">${warnCount}</div>
+        <div class="delta">${warnCount ? 'Review now →' : 'All clear'}</div>
+      </div>
+      <div class="card card-neutral">
+        <div class="c-icon">${iconDraft}</div>
+        <div class="k">Draft jobs</div>
+        <div class="v">${draftCount}</div>
+        <div class="delta">Not yet published</div>
+      </div>
+    `;
+  }
+
+  function renderJobsTable(){
+    const tbody = document.getElementById('jobs-tbody');
+    const table = tbody.closest('table');
+    const emptyState = document.getElementById('jobs-empty');
+    const query = (document.getElementById('job-search')?.value || '').trim().toLowerCase();
+    const statusFilter = document.getElementById('job-status-filter')?.value || 'all';
+
+    const filtered = requisitions.filter(r => {
+      const matchesQuery = !query || r.role.toLowerCase().includes(query) || r.location.toLowerCase().includes(query);
+      const matchesStatus = statusFilter === 'all' || r.status === statusFilter;
+      return matchesQuery && matchesStatus;
+    });
+
+    if(filtered.length === 0){
+      table.style.display = 'none';
+      emptyState.style.display = 'block';
+      return;
+    }
+    table.style.display = '';
+    emptyState.style.display = 'none';
+
+    tbody.innerHTML = filtered.map(r => {
+      const hasImprovements = Array.isArray(r.improvements) && r.improvements.length > 0;
+      return `
+      <tr onclick="openReq('${r.id}')">
+        <td>${r.role}${hasImprovements ? ' <span class="badge closing" style="margin-left:6px;font-size:10px;">Needs attention</span>' : ''}</td>
+        <td>${r.location}</td>
+        <td>${r.applicants}</td>
+        <td>${statusBadge(r.status)}</td>
+        <td>${r.posted}</td>
+      </tr>
+    `}).join('');
+  }
+
+  function renderWarningsDrawerList(){
+    const list = document.getElementById('warnings-drawer-list');
+    const items = [];
+    requisitions.forEach(r => {
+      getReqWarnings(r).forEach(w => items.push({ r, w }));
+    });
+    if(items.length === 0){
+      list.innerHTML = '<div class="warning-empty">No requisitions need attention right now.</div>';
+      return;
+    }
+    list.innerHTML = items.map(({r, w}) => `
+      <div class="warning-item" onclick="closeWarnings(); openReq('${r.id}')">
+        <div class="w-icon">!</div>
+        <div class="w-text">
+          <div class="w-title">${r.role} — ${r.location}</div>
+          <div class="w-sub">${w}</div>
+        </div>
+        <div class="w-go">Review →</div>
+      </div>
+    `).join('');
+  }
+
+  function openWarnings(){
+    renderWarningsDrawerList();
+    document.getElementById('warn-overlay').classList.add('open');
+  }
+  function closeWarnings(){
+    document.getElementById('warn-overlay').classList.remove('open');
+  }
+
+  function openReq(reqId){
+    const r = requisitions.find(x => x.id === reqId);
+    if(!r) return;
+    document.getElementById('req-title').textContent = r.role;
+    const banner = document.getElementById('req-warning-banner');
+    const reqWarnings = getReqWarnings(r);
+    if(reqWarnings.length){
+      banner.style.display = 'block';
+      banner.innerHTML = Array.isArray(r.improvements) && r.improvements.length
+        ? renderReqImprovements(r)
+        : reqWarnings.map(w => `⚠ ${w}`).join('<br>');
+    } else {
+      banner.style.display = 'none';
+    }
+    document.getElementById('req-meta').innerHTML = `
+      <div class="m"><div class="k">Location</div><div class="v">${r.location}</div></div>
+      <div class="m"><div class="k">Salary range</div><div class="v ${r.salaryRange ? '' : 'missing'}">${r.salaryRange || 'Not set'}</div></div>
+      <div class="m"><div class="k">Applicants</div><div class="v">${r.applicants}</div></div>
+      <div class="m"><div class="k">Status</div><div class="v">${statusBadge(r.status)}</div></div>
+    `;
+    document.getElementById('req-candidate-count').textContent = `(${r.candidates.length})`;
+    document.getElementById('candidate-list').innerHTML = r.candidates.length
+      ? r.candidates.map(c => `
+        <div class="candidate-item" onclick="openCandidate('${r.id}','${c.id}')">
+          <div class="c-avatar">${c.name.split(' ').map(n=>n[0]).join('')}</div>
+          <div class="c-info">
+            <div class="c-name">${c.name}</div>
+            <div class="c-stage">${c.stage}</div>
+          </div>
+          <div class="c-score ${scoreClass(c.score)}">${c.score}% fit</div>
+        </div>
+      `).join('')
+      : '<div class="warning-empty">No candidates yet — this job hasn\'t been published.</div>';
+    document.getElementById('req-overlay').classList.add('open');
+  }
+  function closeReq(){
+    document.getElementById('req-overlay').classList.remove('open');
+  }
+
+  const RING_CIRC_FIT = 188.5;
+  function openCandidate(reqId, candId){
+    const r = requisitions.find(x => x.id === reqId);
+    const c = r.candidates.find(x => x.id === candId);
+    if(!c) return;
+    document.getElementById('cand-name').textContent = c.name;
+    document.getElementById('fit-score-num').textContent = c.score + '%';
+    const offset = RING_CIRC_FIT * (1 - c.score/100);
+    document.getElementById('fit-ring-fg').style.strokeDashoffset = offset;
+    document.getElementById('fit-breakdown').innerHTML = c.breakdown.map(([label,val]) => `
+      <div class="fit-row">
+        <div class="fit-label">${label}</div>
+        <div class="fit-bar"><span style="width:${val}%"></span></div>
+        <div class="fit-val">${val}</div>
+      </div>
+    `).join('');
+    const res = c.resume;
+    document.getElementById('resume-preview').innerHTML = `
+      <h3>${c.name}</h3>
+      <div class="r-role">Applying for ${res.role}</div>
+      <div class="r-block"><b>Experience</b>${res.experience}</div>
+      <div class="r-block"><b>Education</b>${res.education}</div>
+      <div class="r-block"><b>Highlight</b>${res.highlight}</div>
+    `;
+    document.getElementById('cand-overlay').classList.add('open');
+  }
+  function closeCandidate(){
+    document.getElementById('cand-overlay').classList.remove('open');
+  }
+
+  function openSubscription(){
+    document.getElementById('sub-overlay').classList.add('open', 'center');
+  }
+  function closeSubscription(){
+    document.getElementById('sub-overlay').classList.remove('open', 'center');
+  }
+
+  function openAddJob(){
+    document.getElementById('new-job-role').value = '';
+    document.getElementById('new-job-location').value = '';
+    document.getElementById('new-job-status').value = 'draft';
+    document.getElementById('add-job-error').textContent = '';
+    document.getElementById('add-job-overlay').classList.add('open', 'center');
+  }
+  function closeAddJob(){
+    document.getElementById('add-job-overlay').classList.remove('open', 'center');
+  }
+  function submitAddJob(){
+    const role = document.getElementById('new-job-role').value.trim();
+    const location = document.getElementById('new-job-location').value.trim();
+    const status = document.getElementById('new-job-status').value;
+    if(!role || !location){
+      document.getElementById('add-job-error').textContent = 'Add a role title and location to continue.';
+      return;
+    }
+    reqCounter++;
+    requisitions.unshift({
+      id: 'req' + reqCounter,
+      role, location,
+      applicants: 0,
+      status,
+      posted: status === 'draft' ? 'Not yet posted' : 'Just now',
+      warning: null,
+      candidates: []
+    });
+    closeAddJob();
+    renderJobsTable();
+    renderStats();
+  }
+
+  function openProfile(){
+    document.getElementById('profile-overlay').classList.add('open');
+  }
+  function closeProfile(){
+    document.getElementById('profile-overlay').classList.remove('open');
+  }
+
+  function openMobileNav(){
+    document.getElementById('mobilenav-overlay').classList.add('open');
+  }
+  function closeMobileNav(){
+    document.getElementById('mobilenav-overlay').classList.remove('open');
+  }
+
+  function showDashPage(pageId){
+    document.querySelectorAll('.dash-page').forEach(function(page){
+      page.classList.toggle('active', page.id === 'page-' + pageId);
+    });
+    document.querySelectorAll('.sidebar nav a[data-page], .mobile-nav-list a[data-page]').forEach(function(link){
+      link.classList.toggle('active', link.getAttribute('data-page') === pageId);
+    });
+  }
+
+  renderJobsTable();
+  renderStats();
+  initContinueConversationBanner();
+  initSeekLogos();
+
+  function buildSeekUrl(path){
+    if(!conversationId) return path;
+    return path + '?conversationId=' + encodeURIComponent(conversationId);
+  }
+
+  function dashboardUrl(){
+    return buildSeekUrl('/employer/dashboard');
+  }
+
+  function loginUrl(){
+    return buildSeekUrl('/employer/login');
+  }
+
+  function login(){
+    document.body.classList.add('logged-in');
+    document.getElementById('login-view').style.display = 'none';
+    document.getElementById('dashboard-view').style.display = 'flex';
+    try { history.replaceState(null, '', dashboardUrl()); } catch(e) {}
+    loadGenesysMessenger();
+  }
+  function logout(){
+    document.body.classList.remove('logged-in');
+    document.getElementById('dashboard-view').style.display = 'none';
+    document.getElementById('login-view').style.display = 'flex';
+    try { history.replaceState(null, '', loginUrl()); } catch(e) {}
+    enteredPin = ''; updateDots();
+  }
+</script>
+</body>
+</html>

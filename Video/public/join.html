@@ -1,0 +1,440 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Join Meeting — SEEK</title>
+  <link rel="icon" href="data:,">
+  <style>
+    :root {
+      --bg: #f4f1fb;
+      --card: #ffffff;
+      --ink: #1f1633;
+      --muted: #6b6280;
+      --purple: #6b21a8;
+      --purple-dark: #581c87;
+      --purple-soft: #ede9fe;
+      --border: #ddd6f3;
+      --radius: 14px;
+      --shadow: 0 18px 40px rgba(55, 24, 92, 0.08);
+      --font: "Segoe UI", system-ui, -apple-system, sans-serif;
+    }
+
+    * { box-sizing: border-box; }
+
+    body {
+      margin: 0;
+      font-family: var(--font);
+      color: var(--ink);
+      background: linear-gradient(180deg, #faf7ff 0%, var(--bg) 100%);
+      min-height: 100vh;
+    }
+
+    body.in-meeting {
+      overflow: hidden;
+      background: #0f0a18;
+    }
+
+    .page {
+      width: min(560px, calc(100% - 32px));
+      margin: 0 auto;
+      padding: 48px 0;
+      transition: opacity 0.35s ease, transform 0.35s ease;
+    }
+
+    body.in-meeting .page {
+      opacity: 0;
+      transform: translateY(12px);
+      pointer-events: none;
+      position: absolute;
+      inset: 0;
+    }
+
+    .hero {
+      margin-bottom: 28px;
+      text-align: center;
+    }
+
+    .eyebrow {
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+      font-size: 12px;
+      font-weight: 700;
+      color: var(--purple);
+      margin: 0 0 8px;
+    }
+
+    h1 {
+      margin: 0 0 10px;
+      font-size: clamp(28px, 5vw, 36px);
+      line-height: 1.15;
+    }
+
+    .lead {
+      margin: 0;
+      color: var(--muted);
+      font-size: 17px;
+      line-height: 1.5;
+    }
+
+    .card {
+      background: var(--card);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      box-shadow: var(--shadow);
+      padding: 40px 32px;
+      text-align: center;
+    }
+
+    .agent-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 10px;
+      margin-bottom: 28px;
+      padding: 10px 16px;
+      border-radius: 999px;
+      background: var(--purple-soft);
+      color: var(--purple-dark);
+      font-size: 14px;
+      font-weight: 600;
+    }
+
+    .agent-badge span {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      width: 32px;
+      height: 32px;
+      border-radius: 50%;
+      background: var(--purple);
+      color: #fff;
+      font-size: 14px;
+      font-weight: 700;
+    }
+
+    .details {
+      display: grid;
+      gap: 16px;
+      margin: 0 0 32px;
+      text-align: left;
+    }
+
+    .detail-row {
+      padding: 14px 16px;
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      background: #fcfbff;
+    }
+
+    .detail-row dt {
+      margin: 0 0 4px;
+      color: var(--muted);
+      font-size: 12px;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 0.04em;
+    }
+
+    .detail-row dd {
+      margin: 0;
+      font-size: 18px;
+      font-weight: 600;
+      word-break: break-word;
+    }
+
+    .join-actions {
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+      align-items: stretch;
+    }
+
+    .btn {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+      padding: 14px 20px;
+      border-radius: 10px;
+      border: none;
+      font: inherit;
+      font-weight: 600;
+      text-decoration: none;
+      cursor: pointer;
+      transition: background 0.15s ease, transform 0.15s ease;
+    }
+
+    .btn:focus {
+      outline: 3px solid rgba(107, 33, 168, 0.25);
+      outline-offset: 2px;
+    }
+
+    .btn-primary {
+      background: var(--purple);
+      color: #fff;
+      font-size: 18px;
+      padding: 16px 24px;
+    }
+
+    .btn-primary:hover {
+      background: var(--purple-dark);
+      transform: translateY(-1px);
+    }
+
+    .btn-ghost {
+      background: transparent;
+      color: var(--muted);
+      border: 1px solid var(--border);
+    }
+
+    .btn-ghost:hover {
+      background: #faf8ff;
+      color: var(--ink);
+    }
+
+    .video-icon {
+      width: 18px;
+      height: 18px;
+      fill: currentColor;
+    }
+
+    .meeting-view {
+      position: fixed;
+      inset: 0;
+      z-index: 20;
+      display: flex;
+      flex-direction: column;
+      background: #0f0a18;
+      opacity: 0;
+      pointer-events: none;
+      transform: translateY(16px);
+      transition: opacity 0.35s ease, transform 0.35s ease;
+    }
+
+    .meeting-view.is-active {
+      opacity: 1;
+      pointer-events: auto;
+      transform: translateY(0);
+    }
+
+    .meeting-toolbar {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 16px;
+      padding: 12px 16px;
+      background: rgba(31, 22, 51, 0.95);
+      color: #fff;
+      border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+    }
+
+    .meeting-toolbar-info {
+      display: flex;
+      flex-direction: column;
+      gap: 2px;
+      min-width: 0;
+    }
+
+    .meeting-toolbar-info strong {
+      font-size: 14px;
+      font-weight: 700;
+    }
+
+    .meeting-toolbar-info span {
+      font-size: 12px;
+      color: rgba(255, 255, 255, 0.72);
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+
+    .meeting-toolbar .btn {
+      flex-shrink: 0;
+      padding: 10px 14px;
+      font-size: 14px;
+      background: rgba(255, 255, 255, 0.1);
+      color: #fff;
+      border: 1px solid rgba(255, 255, 255, 0.16);
+    }
+
+    .meeting-toolbar .btn:hover {
+      background: rgba(255, 255, 255, 0.16);
+      transform: none;
+    }
+
+    .meeting-frame-wrap {
+      flex: 1;
+      min-height: 0;
+      position: relative;
+      background: #000;
+    }
+
+    .meeting-loading {
+      position: absolute;
+      inset: 0;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      gap: 12px;
+      color: rgba(255, 255, 255, 0.85);
+      font-size: 15px;
+      background: #12091f;
+    }
+
+    .meeting-loading.hidden {
+      display: none;
+    }
+
+    .spinner {
+      width: 28px;
+      height: 28px;
+      border: 3px solid rgba(255, 255, 255, 0.2);
+      border-top-color: #fff;
+      border-radius: 50%;
+      animation: spin 0.8s linear infinite;
+    }
+
+    @keyframes spin {
+      to { transform: rotate(360deg); }
+    }
+
+    #zoom-frame {
+      width: 100%;
+      height: 100%;
+      border: 0;
+      background: #000;
+    }
+
+    .hidden { display: none !important; }
+
+    @media (max-width: 480px) {
+      .page {
+        padding: 32px 0;
+      }
+
+      .card {
+        padding: 28px 20px;
+      }
+
+      .meeting-toolbar {
+        flex-direction: column;
+        align-items: stretch;
+      }
+
+      .meeting-toolbar .btn {
+        width: 100%;
+      }
+    }
+  </style>
+</head>
+<body>
+  <main class="page" id="lobby">
+    <header class="hero">
+      <p class="eyebrow">SEEK Video Consultation</p>
+      <h1>Join your meeting</h1>
+      <p class="lead">Connect with your SEEK agent for your scheduled video consultation.</p>
+    </header>
+
+    <section class="card" aria-label="Meeting join details">
+      <div class="agent-badge">
+        <span>I</span>
+        Your agent: Isabella
+      </div>
+
+      <dl class="details">
+        <div class="detail-row">
+          <dt>Meeting ID</dt>
+          <dd>5730504836</dd>
+        </div>
+        <div class="detail-row">
+          <dt>Platform</dt>
+          <dd>Zoom (in browser)</dd>
+        </div>
+      </dl>
+
+      <div class="join-actions">
+        <button class="btn btn-primary" id="join-btn" type="button">
+          <svg class="video-icon" viewBox="0 0 24 24" aria-hidden="true">
+            <path d="M17 10.5V7a1 1 0 0 0-1-1H4a1 1 0 0 0-1 1v10a1 1 0 0 0 1 1h12a1 1 0 0 0 1-1v-3.5l4 4v-11l-4 4z"/>
+          </svg>
+          Join meeting
+        </button>
+        <a class="btn btn-ghost hidden" id="back-link" href="/">Back to scheduler</a>
+      </div>
+    </section>
+  </main>
+
+  <section class="meeting-view" id="meeting-view" aria-label="In-browser meeting" hidden>
+    <div class="meeting-toolbar">
+      <div class="meeting-toolbar-info">
+        <strong>SEEK consultation with Isabella</strong>
+        <span>Meeting ID 5730504836 · Zoom web client</span>
+      </div>
+      <button class="btn" id="leave-btn" type="button">Leave meeting</button>
+    </div>
+    <div class="meeting-frame-wrap">
+      <div class="meeting-loading" id="meeting-loading">
+        <div class="spinner" aria-hidden="true"></div>
+        <span>Opening meeting in your browser…</span>
+      </div>
+      <iframe
+        id="zoom-frame"
+        title="Zoom meeting"
+        allow="camera; microphone; fullscreen; display-capture; autoplay"
+      ></iframe>
+    </div>
+  </section>
+
+  <script>
+    (function () {
+      var MEETING_ID = '5730504836';
+      var MEETING_PASSWORD = '0x39uWU7imanPc5YigqzSal2LbDLjn.1';
+      var WEB_CLIENT_URL = 'https://genesys.zoom.us/wc/join/' + MEETING_ID
+        + '?pwd=' + encodeURIComponent(MEETING_PASSWORD)
+        + '&prefer=1';
+
+      var joinBtn = document.getElementById('join-btn');
+      var leaveBtn = document.getElementById('leave-btn');
+      var backLink = document.getElementById('back-link');
+      var meetingView = document.getElementById('meeting-view');
+      var zoomFrame = document.getElementById('zoom-frame');
+      var meetingLoading = document.getElementById('meeting-loading');
+
+      if (window.self === window.top) {
+        backLink.classList.remove('hidden');
+      }
+
+      function showMeeting() {
+        document.body.classList.add('in-meeting');
+        meetingView.hidden = false;
+        requestAnimationFrame(function () {
+          meetingView.classList.add('is-active');
+        });
+        meetingLoading.classList.remove('hidden');
+        zoomFrame.src = WEB_CLIENT_URL;
+      }
+
+      function hideMeeting() {
+        document.body.classList.remove('in-meeting');
+        meetingView.classList.remove('is-active');
+        zoomFrame.src = 'about:blank';
+        meetingLoading.classList.remove('hidden');
+
+        window.setTimeout(function () {
+          meetingView.hidden = true;
+        }, 350);
+      }
+
+      joinBtn.addEventListener('click', showMeeting);
+      leaveBtn.addEventListener('click', hideMeeting);
+
+      zoomFrame.addEventListener('load', function () {
+        if (zoomFrame.src && zoomFrame.src !== 'about:blank') {
+          meetingLoading.classList.add('hidden');
+        }
+      });
+    })();
+  </script>
+</body>
+</html>

@@ -11,11 +11,15 @@
     return;
   }
 
+  let pendingAutoAuthSource = null;
+  let activeGenesysAuthApi = null;
+
+  function bootAuthProvider() {
   const REDIRECT_URI = window.location.origin + window.location.pathname;
-  const PENDING_CODE_KEY = 'genesys-pending-auth-code';
-  const PENDING_VERIFIER_KEY = 'genesys-pending-code-verifier';
-  const PENDING_NONCE_KEY = 'genesys-pending-nonce';
-  const PENDING_CAPTURED_AT_KEY = 'genesys-pending-captured-at';
+  const PENDING_CODE_KEY = window.CareerMarketplaceAuth?.PENDING_AUTH_CODE_KEY || 'genesys-pending-auth-code';
+  const PENDING_VERIFIER_KEY = window.CareerMarketplaceAuth?.PENDING_VERIFIER_KEY || 'genesys-pending-code-verifier';
+  const PENDING_NONCE_KEY = window.CareerMarketplaceAuth?.PENDING_NONCE_KEY || 'genesys-pending-nonce';
+  const PENDING_CAPTURED_AT_KEY = window.CareerMarketplaceAuth?.PENDING_CAPTURED_AT_KEY || 'genesys-pending-captured-at';
   const OKTA_TEST_PAYLOAD_KEY = 'career-marketplace-okta-test-payload';
   let authProviderRef = null;
   let authCodeDelivered = false;
@@ -263,6 +267,18 @@
   }
 
   function requestFreshAuthCode() {
+    if (window.CAREER_ASSISTANT_DEFER_AUTH_PROVIDER) {
+      if (sessionStorage.getItem('ca-genesys-chat-authenticated') === 'true') {
+        trace('log', '6-request-fresh-authCode-SKIP', { reason: 'Genesys session already authenticated' });
+        return;
+      }
+      const pendingKey = window.CareerMarketplaceAuth?.PENDING_AUTH_CODE_KEY || 'ca-genesys-pending-auth-code';
+      const verifierKey = window.CareerMarketplaceAuth?.PENDING_VERIFIER_KEY || 'ca-genesys-pending-code-verifier';
+      if (sessionStorage.getItem(pendingKey) && sessionStorage.getItem(verifierKey)) {
+        trace('log', '6-request-fresh-authCode-SKIP', { reason: 'pending auth handoff already stored' });
+        return;
+      }
+    }
     authCodeDelivered = false;
     lastDeliveredPayload = null;
     trace('warn', '6-request-fresh-authCode', {
@@ -272,13 +288,20 @@
     if (window.CareerMarketplaceAuth?.signInForGenesysPrefetch) {
       window.CareerMarketplaceAuth.signInForGenesysPrefetch();
     } else if (window.CareerMarketplaceAuth?.genesysOktaAuth) {
-      sessionStorage.setItem('genesys-prefetch-code', 'true');
+      sessionStorage.setItem(
+        window.CareerMarketplaceAuth.GENESYS_PREFETCH_KEY || 'genesys-prefetch-code',
+        'true'
+      );
       window.CareerMarketplaceAuth.genesysOktaAuth.signInWithRedirect({ prompt: 'none' });
     }
   }
 
   function isGenesysAlreadyAuthenticated() {
     if (window.CareerMarketplaceAuth?.genesysChatAuthenticated) return true;
+    if (window.CAREER_ASSISTANT_DEFER_AUTH_PROVIDER &&
+        sessionStorage.getItem('ca-genesys-chat-authenticated') === 'true') {
+      return true;
+    }
     if (authProviderRef) {
       try {
         return !!authProviderRef.data('Auth.authenticated');
@@ -291,10 +314,16 @@
     if (!genesysAuthState.messagingStarted || genesysAuthState.messagingAuthenticated) {
       return null;
     }
-    if (genesysAuthState.allowSessionUpgrade) {
-      return 'Auth.signIn';
+    // Headless career-assistant has no native Messenger.open — must proactively Auth.signIn.
+    if (genesysAuthState.allowSessionUpgrade === false && !window.CAREER_ASSISTANT_DEFER_AUTH_PROVIDER) {
+      return null;
     }
-    return null;
+    return 'Auth.signIn';
+  }
+
+  function resumeDeferredCareerAssistantAuth(source) {
+    if (!window.CAREER_ASSISTANT_DEFER_AUTH_PROVIDER) return;
+    queueAutoAuth(source || 'deferred-resume');
   }
 
   function queueAutoAuth(source) {
@@ -355,11 +384,21 @@
     }
 
     if (authCodeDelivered) {
-      trace('log', '4-autoAuth-SKIP', {
-        source,
-        reason: 'authCode already delivered — waiting for Genesys exchange'
-      });
-      return;
+      if (!isGenesysAlreadyAuthenticated()) {
+        trace('warn', '4-autoAuth-RETRY', {
+          source,
+          reason: 'authCode delivered but not authenticated — retrying Auth.signIn'
+        });
+        authCodeDelivered = false;
+        lastDeliveredPayload = null;
+        lastDeliveredCodePrefix = null;
+      } else {
+        trace('log', '4-autoAuth-SKIP', {
+          source,
+          reason: 'authCode already delivered — waiting for Genesys exchange'
+        });
+        return;
+      }
     }
 
     if (!genesysAuthState.messagingStarted || genesysAuthState.messagingAuthenticated) {
@@ -371,7 +410,9 @@
     if (!authCommand) {
       trace('warn', '4-autoAuth-SKIP', {
         source,
-        reason: 'allowSessionUpgrade is false — Genesys will call getAuthCode handler when messenger opens',
+        reason: genesysAuthState.allowSessionUpgrade === false
+          ? 'allowSessionUpgrade is false and not on headless career-assistant page'
+          : 'messaging not ready or already authenticated',
         allowSessionUpgrade: genesysAuthState.allowSessionUpgrade
       });
       return;
@@ -434,6 +475,12 @@
       trace('log', '0-authProvider-registered', {});
 
       AuthProvider.registerCommand('signIn', async (e) => {
+        if (isGenesysAlreadyAuthenticated()) {
+          trace('log', '5-signIn-SKIP', { reason: 'Genesys session already authenticated' });
+          e.resolve();
+          return;
+        }
+
         const isProactive = autoAuthInFlight || /autoAuth|MessagingService|prefetch/i.test(String(e?.data?.source || ''));
         trace('log', '5-signIn-CALLED', {
           from: isProactive ? 'proactive Auth.signIn command' : 'user clicked Sign in in Genesys messenger',
@@ -443,6 +490,13 @@
         const pendingBeforeDeliver = getPendingAuthCode();
         if (pendingBeforeDeliver && lastDeliveredCodePrefix &&
             codeFingerprint(pendingBeforeDeliver) === lastDeliveredCodePrefix) {
+          if (authCodeDelivered && lastDeliveredPayload) {
+            trace('log', '5-signIn-REDELIVER', {
+              hint: 'Exchange in progress — reusing delivered authCode payload'
+            });
+            e.resolve({ ...lastDeliveredPayload });
+            return;
+          }
           debugIngest('H-B,H-E', 'genesys-auth-provider.js:signIn', 'burned code detected — requesting fresh', {
             codeFingerprint: lastDeliveredCodePrefix
           });
@@ -465,6 +519,11 @@
 
         const oktaAuth = window.CareerMarketplaceAuth?.portalOktaAuth || window.CareerMarketplaceAuth?.oktaAuth;
         const isAuthed = oktaAuth && await oktaAuth.isAuthenticated();
+        if (isGenesysAlreadyAuthenticated()) {
+          trace('log', '5-signIn-SKIP', { reason: 'authenticated while resolving authCode' });
+          e.resolve();
+          return;
+        }
         trace('warn', '5-signIn-NO-CODE', {
           oktaAuthenticated: isAuthed,
           action: isAuthed ? 'silent prefetch redirect' : 'full Okta login redirect'
@@ -548,7 +607,19 @@
       });
 
       AuthProvider.subscribe('Auth.authenticated', (data) => {
+        genesysAuthState.messagingAuthenticated = true;
+        autoAuthInFlight = false;
         const parsed = data?.jwt ? window.CareerMarketplaceTrace?.parseJwt(data.jwt) : null;
+        console.log('✅ [AUTH TRACE] AUTHENTICATED — Genesys web messaging session authenticated', {
+          hasJwt: !!(data?.jwt || data?.token),
+          jwtClaims: parsed?.payload || data?.claims || null
+        });
+        trace('success', 'AUTHENTICATED', {
+          authenticated: true,
+          hasJwt: !!(data?.jwt || data?.token),
+          jwtClaims: parsed?.payload || data?.claims || null,
+          raw: window.CareerMarketplaceDebug?.isEnabled?.() ? data : undefined
+        });
         trace('success', '8-Auth.authenticated-SUCCESS', {
           hasJwt: !!(data?.jwt || data?.token),
           jwtClaims: parsed?.payload || data?.claims || null,
@@ -680,6 +751,15 @@
           hint: 'Enable authentication on JT_Medibank config and publish deployment',
           authKeys: clientAuth ? Object.keys(clientAuth) : []
         });
+        if (window.CAREER_ASSISTANT_DEFER_AUTH_PROVIDER) {
+          window.dispatchEvent(new CustomEvent('ca:genesys-auth-unavailable', {
+            detail: {
+              reason: 'Auth not enabled on this Genesys deployment',
+              deploymentId: window.CareerMarketplaceGenesys?.DEPLOYMENT_ID,
+              hint: 'Use deployment 80372e7d-209b-4b93-ae33-e3078f7f8df2 or enable auth in Genesys Admin'
+            }
+          }));
+        }
       } else if (integrationHiddenFromBrowser) {
         trace('log', '3-GENESYS-AUTH-ENABLED', {
           hint: 'Auth enabled in browser config. integrationId is server-side only. If Sign in fails, check OIDC integration credentials and Implicit Flow = False',
@@ -699,7 +779,11 @@
         next: authenticated ? undefined : 'triggering Auth.signIn with prefetched authCode'
       });
       if (!authenticated) {
-        queueAutoAuth('MessagingService.started');
+        if (window.CAREER_ASSISTANT_DEFER_AUTH_PROVIDER) {
+          flushPendingAutoAuth();
+        } else {
+          queueAutoAuth('MessagingService.started');
+        }
       }
     });
 
@@ -744,6 +828,7 @@
     persistAuthHandoff,
     attemptMessengerAuthentication,
     queueAutoAuth,
+    resumeDeferredAuth: resumeDeferredCareerAssistantAuth,
     clearHandoff() {
       authCodeDelivered = false;
       clearAuthHandoff();
@@ -760,4 +845,54 @@
       } catch (e) { return null; }
     }
   };
+  activeGenesysAuthApi = window.CareerMarketplaceGenesysAuth;
+  }
+
+  if (window.CAREER_ASSISTANT_DEFER_AUTH_PROVIDER) {
+    window.enableCareerAssistantGenesysAuth = function enableCareerAssistantGenesysAuth() {
+      if (window.__caGenesysAuthBooted) return;
+      window.__caGenesysAuthBooted = true;
+      bootAuthProvider();
+    };
+    window.CareerMarketplaceGenesysAuth = {
+      queueAutoAuth(source) {
+        if (activeGenesysAuthApi) activeGenesysAuthApi.queueAutoAuth(source);
+        else pendingAutoAuthSource = source;
+      },
+      resumeDeferredAuth(source) {
+        if (activeGenesysAuthApi) activeGenesysAuthApi.resumeDeferredAuth(source);
+        else pendingAutoAuthSource = source;
+      },
+      persistAuthHandoff(authCode) {
+        try {
+          sessionStorage.setItem(
+            window.CareerMarketplaceAuth?.PENDING_AUTH_CODE_KEY || 'ca-genesys-pending-auth-code',
+            authCode
+          );
+          const genesysKey = window.CareerMarketplaceAuth?.GENESYS_TRANSACTION_STORAGE_KEY || 'okta-ca-genesys-transaction';
+          const raw = sessionStorage.getItem(genesysKey);
+          if (raw) {
+            const parsed = JSON.parse(raw);
+            if (parsed.codeVerifier) {
+              sessionStorage.setItem(
+                window.CareerMarketplaceAuth?.PENDING_VERIFIER_KEY || 'ca-genesys-pending-code-verifier',
+                parsed.codeVerifier
+              );
+            }
+            if (parsed.nonce) {
+              sessionStorage.setItem(
+                window.CareerMarketplaceAuth?.PENDING_NONCE_KEY || 'ca-genesys-pending-nonce',
+                parsed.nonce
+              );
+            }
+          }
+        } catch (e) { /* ignore */ }
+      },
+      clearHandoff() {},
+      logout() { return Promise.resolve(); }
+    };
+    return;
+  }
+
+  bootAuthProvider();
 })();

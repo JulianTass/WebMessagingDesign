@@ -486,6 +486,30 @@
     getInjectionLog,
     exportLog,
     parseJwt,
+    getAuthStatus() {
+      const authed = !!(window.CareerMarketplaceAuth?.genesysChatAuthenticated);
+      const pendingCode = sessionStorage.getItem(
+        window.CareerMarketplaceAuth?.PENDING_AUTH_CODE_KEY || 'ca-genesys-pending-auth-code'
+      );
+      const hasVerifier = !!sessionStorage.getItem(
+        window.CareerMarketplaceAuth?.PENDING_VERIFIER_KEY || 'ca-genesys-pending-code-verifier'
+      );
+      return {
+        genesysChatAuthenticated: authed,
+        authenticated: authed,
+        status: authed ? 'AUTHENTICATED' : 'NOT_AUTHENTICATED',
+        hasPendingAuthCode: !!pendingCode,
+        hasCodeVerifier: hasVerifier,
+        deploymentId: window.CareerMarketplaceGenesys?.DEPLOYMENT_ID || null,
+        redirectUri: window.CareerMarketplaceAuth?.REDIRECT_URI || null
+      };
+    },
+    dumpLastGenesysMessage() {
+      return window.__caDumpLastGenesysMessage?.();
+    },
+    dumpInboundMessages(limit) {
+      return window.__caDumpInboundLog?.(limit || 10);
+    },
     showPanel() {}
   };
 })();

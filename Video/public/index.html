@@ -1,0 +1,136 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>SEEK Meeting Scheduler</title>
+  <link rel="stylesheet" href="/styles.css">
+  <!-- Genesys CSS https://spark.genesys.com/ -->
+  <link href="https://dhqbrvplips7x.cloudfront.net/common-ui-docs/genesys-webcomponents/3.8.1-178/genesys-webcomponents/genesys-webcomponents.css" rel="stylesheet" />
+  <script type="module" src="https://dhqbrvplips7x.cloudfront.net/common-ui-docs/genesys-webcomponents/3.8.1-178/genesys-webcomponents/genesys-webcomponents.esm.js"></script>
+  <!-- Genesys SDK info https://developer.genesys.cloud/ -->
+  <script src="https://sdk-cdn.mypurecloud.com/javascript/227.0.0/purecloud-platform-client-v2.min.js"></script>
+</head>
+<body>
+  <main class="page">
+    <header class="hero">
+      <p class="eyebrow">SEEK Meeting Scheduler</p>
+      <h1>Schedule a video consultation</h1>
+      <p class="lead">Create a Zoom meeting and send an Outlook-compatible calendar invitation.</p>
+    </header>
+
+    <section class="card connections" aria-label="Account connections">
+      <div class="connection-panel" id="microsoft-panel">
+        <div>
+          <h2>Microsoft account</h2>
+          <p class="status" id="microsoft-status">Not connected</p>
+        </div>
+        <div class="connection-actions">
+          <a class="btn btn-secondary" id="microsoft-connect" href="/auth/microsoft">Connect Microsoft</a>
+          <button class="btn btn-ghost hidden" id="microsoft-disconnect" type="button">Disconnect Microsoft</button>
+        </div>
+      </div>
+      <div class="connection-panel" id="zoom-panel">
+        <div>
+          <h2>Zoom account</h2>
+          <p class="status" id="zoom-status">Not connected</p>
+        </div>
+        <div class="connection-actions">
+          <a class="btn btn-secondary" id="zoom-connect" href="/auth/zoom">Connect Zoom</a>
+          <button class="btn btn-ghost hidden" id="zoom-disconnect" type="button">Disconnect Zoom</button>
+        </div>
+      </div>
+    </section>
+
+    <section class="card">
+      <form id="schedule-form" novalidate>
+        <fieldset id="schedule-fieldset">
+          <legend class="sr-only">Meeting details</legend>
+
+          <div class="grid two">
+            <div class="field">
+              <label for="customerName">Customer name</label>
+              <input id="customerName" name="customerName" type="text" required autocomplete="name">
+            </div>
+            <div class="field">
+              <label for="customerEmail">Customer email</label>
+              <input id="customerEmail" name="customerEmail" type="email" required autocomplete="email">
+            </div>
+          </div>
+
+          <div class="field">
+            <label for="customerPhone">Customer phone (for Genesys callback)</label>
+            <input id="customerPhone" name="customerPhone" type="tel" value="+61406910251" required autocomplete="tel">
+          </div>
+
+          <div class="field">
+            <label for="title">Meeting title</label>
+            <input id="title" name="title" type="text" value="SEEK Employer Consultation" required>
+          </div>
+
+          <div class="field">
+            <label for="description">Meeting description</label>
+            <textarea id="description" name="description" rows="3" placeholder="Optional context for the consultation"></textarea>
+          </div>
+
+          <div class="grid three">
+            <div class="field">
+              <label for="date">Date</label>
+              <input id="date" name="date" type="date" required>
+            </div>
+            <div class="field">
+              <label for="time">Start time</label>
+              <input id="time" name="time" type="time" required>
+            </div>
+            <div class="field">
+              <label for="durationMinutes">Duration</label>
+              <select id="durationMinutes" name="durationMinutes" required>
+                <option value="15">15 minutes</option>
+                <option value="30" selected>30 minutes</option>
+                <option value="45">45 minutes</option>
+                <option value="60">60 minutes</option>
+              </select>
+            </div>
+          </div>
+
+          <div class="field">
+            <label for="timezone">Timezone</label>
+            <select id="timezone" name="timezone" required>
+              <option value="Australia/Sydney" selected>Australia/Sydney</option>
+              <option value="Australia/Melbourne">Australia/Melbourne</option>
+              <option value="Australia/Brisbane">Australia/Brisbane</option>
+              <option value="Australia/Perth">Australia/Perth</option>
+              <option value="Pacific/Auckland">Pacific/Auckland</option>
+              <option value="UTC">UTC</option>
+            </select>
+          </div>
+
+          <div class="form-actions">
+            <button class="btn btn-primary" id="submit-btn" type="submit">
+              <span class="btn-label">Create meeting &amp; send invitation</span>
+              <span class="spinner hidden" aria-hidden="true"></span>
+            </button>
+            <button class="btn btn-secondary" id="genesys-callback-btn" type="button">Genesys call back</button>
+            <button class="btn btn-secondary hidden" id="retry-email-btn" type="button">Retry email only</button>
+          </div>
+        </fieldset>
+      </form>
+
+      <div class="alert hidden" id="result-alert" role="status" aria-live="polite"></div>
+      <div class="result hidden" id="result-panel">
+        <h3>Meeting created</h3>
+        <dl id="result-details"></dl>
+        <p id="download-wrap" class="hidden">
+          <a class="btn btn-secondary" id="download-link" href="#">Download .ics file</a>
+        </p>
+        <p id="delete-email-wrap" class="hidden">
+          <button class="btn btn-ghost" id="delete-email-btn" type="button">Delete sent email</button>
+        </p>
+      </div>
+    </section>
+  </main>
+
+  <script src="/genesys.js"></script>
+  <script src="/app.js"></script>
+</body>
+</html>

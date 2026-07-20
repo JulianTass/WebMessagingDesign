@@ -1,0 +1,1982 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Employer Assistance</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Sora:wght@500;600;700;800&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+<script src="https://global.oktacdn.com/okta-auth-js/7.5.1/okta-auth-js.min.js"></script>
+<style>
+  :root{
+    --navy:#10173A;
+    --navy-deep:#0A0E26;
+    --user-bubble:#1E2A6B;
+    --surface:#FFFFFF;
+    --surface-soft:#F6F5FB;
+    --page-bg:#F1EFFA;
+    --border-light:#E7E4F3;
+    --muted:#6E6A88;
+    --online:#21C97A;
+    --unread:#EA3E82;
+    --spark-1:#6C4CF5;
+    --spark-2:#EA3E82;
+    --spark-3:#FF8A3D;
+    --spark-gradient: linear-gradient(135deg, var(--spark-1) 0%, var(--spark-2) 55%, var(--spark-3) 100%);
+    --brand-blue:#1E2A6B;
+    --avatar-soft:#EEECFB;
+    --radius-lg:22px;
+    --radius-md:16px;
+    --shadow-panel: 0 28px 64px -14px rgba(16,23,58,0.28), 0 6px 18px rgba(16,23,58,0.10);
+  }
+
+  *{ box-sizing:border-box; }
+
+  html, body{ margin:0; height:100%; }
+  body{
+    font-family:'Inter', sans-serif;
+    background:var(--page-bg);
+  }
+
+  .ca-page-back{
+    position:fixed;
+    top:20px;
+    left:20px;
+    font-size:0.875rem;
+    font-weight:600;
+    color:var(--brand-blue);
+    text-decoration:none;
+    z-index:99997;
+  }
+  .ca-page-back:hover{ text-decoration:underline; }
+
+  #ca-login-bar{
+    position:fixed;
+    top:16px;
+    right:20px;
+    z-index:99997;
+    display:flex;
+    align-items:center;
+    gap:12px;
+    font-size:0.875rem;
+  }
+  #ca-login-btn{
+    border:none;
+    border-radius:999px;
+    padding:10px 18px;
+    background:var(--brand-blue);
+    color:#fff;
+    font-family:'Inter',sans-serif;
+    font-size:0.875rem;
+    font-weight:600;
+    cursor:pointer;
+    box-shadow:0 4px 14px -4px rgba(30,42,107,0.45);
+  }
+  #ca-login-btn:hover{ background:#17235a; }
+  #ca-login-btn:disabled{ opacity:.6; cursor:wait; }
+  #ca-user-bar{
+    display:flex;
+    align-items:center;
+    gap:10px;
+    background:#fff;
+    border:1px solid var(--border-light);
+    border-radius:999px;
+    padding:6px 6px 6px 14px;
+    box-shadow:0 2px 8px rgba(16,23,58,0.06);
+  }
+  #ca-user-name{
+    color:var(--navy);
+    font-weight:600;
+    max-width:180px;
+    overflow:hidden;
+    text-overflow:ellipsis;
+    white-space:nowrap;
+  }
+  #ca-logout-btn{
+    border:none;
+    border-radius:999px;
+    padding:7px 14px;
+    background:var(--surface-soft);
+    color:var(--brand-blue);
+    font-family:'Inter',sans-serif;
+    font-size:0.8125rem;
+    font-weight:600;
+    cursor:pointer;
+  }
+  #ca-logout-btn:hover{ background:#EEECFB; }
+  #ca-logout-btn.is-highlighted{
+    background:#FFF5F7;
+    color:#C6284C;
+  }
+  #ca-logout-btn.is-highlighted:hover{ background:#FFECF0; }
+
+  #jm-launcher{
+    position:fixed;
+    right:28px;
+    bottom:28px;
+    width:60px;
+    height:60px;
+    border-radius:50%;
+    border:none;
+    cursor:pointer;
+    background:var(--brand-blue);
+    box-shadow: 0 12px 28px -6px rgba(30,42,107,0.5), 0 4px 10px rgba(30,42,107,0.25);
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    z-index:99998;
+    transition: transform .2s ease, box-shadow .2s ease;
+  }
+  #jm-launcher:hover{ transform: translateY(-2px) scale(1.04); box-shadow: 0 16px 34px -6px rgba(108,76,245,0.55); }
+  #jm-launcher:focus-visible{ outline:3px solid #fff; outline-offset:3px; box-shadow:0 0 0 6px rgba(108,76,245,0.3); }
+  #jm-launcher .jm-badge{
+    position:absolute; top:-2px; right:-2px;
+    background:var(--unread); color:#fff;
+    font-size:11px; font-weight:700; line-height:1;
+    min-width:18px; height:18px; border-radius:9px;
+    display:flex; align-items:center; justify-content:center;
+    padding:0 4px;
+    box-shadow:0 0 0 2px #fff;
+  }
+
+  #jm-panel{
+    position:fixed;
+    right:28px;
+    bottom:100px;
+    width:480px;
+    max-width:calc(100vw - 32px);
+    height:660px;
+    max-height:calc(100vh - 110px);
+    background:var(--surface);
+    border-radius:var(--radius-lg);
+    box-shadow:var(--shadow-panel);
+    display:flex;
+    flex-direction:column;
+    overflow:hidden;
+    z-index:99999;
+    opacity:0;
+    transform: translateY(16px) scale(.98);
+    pointer-events:none;
+    transition: opacity .22s ease, transform .22s ease;
+  }
+  #jm-panel.jm-open{
+    opacity:1;
+    transform: translateY(0) scale(1);
+    pointer-events:auto;
+  }
+
+  /* Hide native Genesys messenger chrome — this page uses custom UI only */
+  #genesys-messenger, #genesys-thirdparty, #messenger{
+    display:none !important;
+    visibility:hidden !important;
+    pointer-events:none !important;
+  }
+
+  #jm-header{
+    background:#fff;
+    border-bottom:1px solid var(--border-light);
+    padding:14px 16px;
+    display:flex;
+    align-items:center;
+    gap:12px;
+    flex-shrink:0;
+    position:relative;
+    z-index:20;
+  }
+  #jm-header .jm-header-brand{
+    display:flex;
+    align-items:center;
+    gap:10px;
+    min-width:0;
+    flex:1;
+  }
+  #jm-header .jm-brand-mark{
+    width:36px; height:36px; border-radius:50%;
+    background:var(--brand-blue);
+    color:#fff;
+    font-family:'Sora',sans-serif;
+    font-weight:800;
+    font-size:12px;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    flex-shrink:0;
+  }
+  #jm-header .jm-header-meta{ min-width:0; flex:1; }
+  #jm-header .jm-brand-word{
+    font-family:'Sora', sans-serif;
+    font-weight:800;
+    font-size:17px;
+    color:var(--navy);
+    letter-spacing:-0.02em;
+    line-height:1.15;
+  }
+  #jm-header .jm-brand-sub{
+    display:flex;
+    flex-direction:column;
+    align-items:flex-start;
+    gap:2px;
+    margin-top:3px;
+    font-size:12px;
+    color:var(--muted);
+    font-weight:500;
+  }
+  #jm-header .jm-subtitle{
+    font-size:12px;
+    color:var(--muted);
+    font-weight:500;
+    white-space:nowrap;
+  }
+  #jm-header .jm-online-status{
+    display:inline-flex;
+    align-items:center;
+    gap:5px;
+    font-size:12px;
+    font-weight:500;
+    color:var(--muted);
+    margin-top:1px;
+  }
+  #jm-header .jm-dot{
+    width:7px; height:7px; border-radius:50%;
+    background:var(--online);
+    box-shadow:0 0 0 3px rgba(33,201,122,0.18);
+    flex-shrink:0;
+  }
+  .jm-header-actions{
+    display:flex;
+    align-items:center;
+    gap:6px;
+    flex-shrink:0;
+  }
+  .jm-menu-wrap{ position:relative; }
+  #jm-menu-btn{
+    background:var(--surface-soft);
+    border:1px solid var(--border-light);
+    color:var(--muted);
+    width:32px; height:32px; border-radius:50%;
+    font-size:16px; line-height:1;
+    letter-spacing:1px;
+    cursor:pointer;
+    display:flex; align-items:center; justify-content:center;
+    flex-shrink:0;
+    transition: background .15s ease, color .15s ease;
+  }
+  #jm-menu-btn:hover,
+  #jm-menu-btn[aria-expanded="true"]{
+    background:#EEECFB;
+    color:var(--navy);
+  }
+  #jm-menu{
+    position:absolute;
+    top:calc(100% + 8px);
+    right:0;
+    min-width:180px;
+    background:#fff;
+    border:1px solid var(--border-light);
+    border-radius:12px;
+    box-shadow:0 12px 32px -8px rgba(16,23,58,0.18), 0 4px 12px rgba(16,23,58,0.08);
+    padding:6px;
+    z-index:30;
+  }
+  #jm-menu[hidden]{ display:none !important; }
+  #jm-menu .jm-menu-item[hidden],
+  #jm-menu .jm-menu-user[hidden]{ display:none !important; }
+  .jm-menu-item{
+    display:flex;
+    align-items:center;
+    gap:8px;
+    width:100%;
+    border:none;
+    background:transparent;
+    border-radius:8px;
+    padding:8px 10px;
+    text-align:left;
+    cursor:pointer;
+    font-family:'Inter',sans-serif;
+    transition: background .15s ease;
+  }
+  .jm-menu-item:hover{ background:var(--surface-soft); }
+  .jm-menu-item:disabled{ opacity:.55; cursor:wait; }
+  .jm-menu-user{
+    display:flex;
+    align-items:center;
+    gap:8px;
+    padding:6px 10px 4px;
+    pointer-events:none;
+  }
+  .jm-menu-user .jm-menu-icon{
+    width:14px; height:14px;
+    color:var(--brand-blue);
+  }
+  .jm-menu-item .jm-menu-icon{
+    width:14px; height:14px;
+    color:var(--muted);
+    flex-shrink:0;
+  }
+  .jm-menu-item .jm-menu-label{
+    display:flex;
+    flex-direction:column;
+    gap:1px;
+    min-width:0;
+  }
+  .jm-menu-item .jm-menu-title,
+  .jm-menu-user .jm-menu-title{
+    font-size:13px;
+    font-weight:600;
+    line-height:1.2;
+  }
+  .jm-menu-item .jm-menu-desc{
+    font-size:11px;
+    color:var(--muted);
+    line-height:1.2;
+  }
+  .jm-menu-item.is-highlighted{ background:#FFF5F7; }
+  .jm-menu-item.is-highlighted:hover{ background:#FFECF0; }
+  .jm-menu-item.is-highlighted .jm-menu-icon,
+  .jm-menu-item.is-highlighted .jm-menu-title{ color:#C6284C; }
+  .jm-menu-item.is-highlighted .jm-menu-desc{ color:#D64D72; }
+  #jm-delete{
+    background:var(--surface-soft);
+    border:1px solid var(--border-light);
+    color:var(--muted);
+    width:32px; height:32px; border-radius:50%;
+    cursor:pointer;
+    display:flex; align-items:center; justify-content:center;
+    flex-shrink:0;
+    transition: background .15s ease, color .15s ease, border-color .15s ease;
+  }
+  #jm-delete:hover{ background:#FFF0F3; color:#C6284C; border-color:#F5C6D0; }
+  #jm-delete:disabled{ opacity:.45; cursor:wait; }
+  #jm-close{
+    background:var(--surface-soft);
+    border:1px solid var(--border-light);
+    color:var(--muted);
+    width:32px; height:32px; border-radius:50%;
+    font-size:15px; cursor:pointer;
+    display:flex; align-items:center; justify-content:center;
+    flex-shrink:0;
+    transition: background .15s ease, color .15s ease;
+  }
+  #jm-close:hover{ background:#EEECFB; color:var(--navy); }
+
+  #jm-messages{
+    flex:1;
+    overflow-y:auto;
+    padding:20px 18px;
+    display:flex;
+    flex-direction:column;
+    gap:16px;
+    background:var(--surface-soft);
+  }
+  #jm-messages::-webkit-scrollbar{ width:6px; }
+  #jm-messages::-webkit-scrollbar-thumb{ background:rgba(108,76,245,0.2); border-radius:3px; }
+
+  .jm-row{ display:flex; gap:9px; max-width:88%; align-items:flex-end; }
+  .jm-row.them{ align-self:flex-start; }
+  .jm-row.me{ align-self:flex-end; flex-direction:row-reverse; }
+
+  .jm-avatar{
+    width:28px; height:28px; border-radius:50%;
+    flex-shrink:0;
+    display:flex; align-items:center; justify-content:center;
+  }
+  .jm-row.them .jm-avatar{ background:var(--brand-blue); color:#fff; }
+  .jm-row.me .jm-avatar{ background:var(--avatar-soft); color:var(--brand-blue); }
+
+  .jm-bubble-col{ display:flex; flex-direction:column; min-width:0; }
+  .jm-row.me .jm-bubble-col{ align-items:flex-end; }
+
+  .jm-bubble{
+    padding:12px 15px;
+    font-size:14.5px;
+    line-height:1.55;
+    border-radius:var(--radius-md);
+    max-width:100%;
+    word-wrap:break-word;
+  }
+  .jm-row.them .jm-bubble{
+    background:var(--surface);
+    color:var(--navy);
+    border:1px solid var(--border-light);
+    box-shadow: 0 1px 2px rgba(16,23,58,0.04);
+    border-bottom-left-radius:5px;
+  }
+  .jm-row.me .jm-bubble{
+    background:var(--user-bubble);
+    color:#fff;
+    border-bottom-right-radius:5px;
+  }
+  .jm-bubble.jm-bubble-rich{ white-space:pre-wrap; }
+  .jm-time{
+    font-size:11px;
+    color:var(--muted);
+    margin-top:5px;
+    display:flex;
+    align-items:center;
+    gap:4px;
+  }
+  .jm-row.me .jm-time{ flex-direction:row-reverse; }
+  .jm-check{ color:var(--spark-1); display:inline-flex; }
+
+  .jm-quickreplies{
+    display:flex;
+    flex-wrap:wrap;
+    gap:8px;
+    margin-top:8px;
+    align-self:flex-start;
+    max-width:100%;
+  }
+  .jm-bubble-col .jm-quickreplies{
+    margin-left:0;
+    max-width:100%;
+  }
+  .jm-chip{
+    background:#fff;
+    border:1.5px solid #D9D4F5;
+    color:var(--navy);
+    font-family:'Inter', sans-serif;
+    font-size:12.5px;
+    font-weight:600;
+    padding:7px 14px;
+    border-radius:999px;
+    cursor:pointer;
+    transition: border-color .15s ease, background .15s ease, transform .1s ease;
+  }
+  .jm-chip:hover{ border-color:var(--spark-1); background:#FBFAFF; transform:translateY(-1px); }
+
+  .jm-system{
+    align-self:center;
+    font-size:11.5px;
+    color:var(--muted);
+    padding:4px 10px;
+  }
+
+  /* Typing indicator — matches native Genesys three-dot / equalizer pattern */
+  #jm-typing{
+    display:none;
+    align-items:center;
+    gap:8px;
+    padding:0 18px 10px;
+    color:var(--muted);
+    font-size:12px;
+    background:var(--surface-soft);
+  }
+  #jm-typing.jm-show{ display:flex; }
+  .jm-eq{ display:flex; align-items:flex-end; gap:3px; height:14px; }
+  .jm-eq span{
+    width:3.5px; border-radius:2px;
+    background:var(--spark-1);
+    animation: jm-bounce 1.1s ease-in-out infinite;
+  }
+  .jm-eq span:nth-child(1){ height:5px;  animation-delay:0s; }
+  .jm-eq span:nth-child(2){ height:11px; animation-delay:.15s; }
+  .jm-eq span:nth-child(3){ height:8px;  animation-delay:.3s; }
+  .jm-eq span:nth-child(4){ height:12px; animation-delay:.45s; }
+  .jm-eq span:nth-child(5){ height:6px;  animation-delay:.6s; }
+  @keyframes jm-bounce{
+    0%,100%{ transform: scaleY(0.55); }
+    50%{ transform: scaleY(1); }
+  }
+  @media (prefers-reduced-motion: reduce){
+    .jm-eq span{ animation:none; transform:scaleY(0.8); }
+  }
+
+  #jm-inputbar{
+    display:flex;
+    align-items:center;
+    gap:10px;
+    padding:12px;
+    background:#fff;
+    border-top:1px solid var(--border-light);
+    flex-shrink:0;
+  }
+  .jm-input-wrap{
+    flex:1;
+    display:flex;
+    align-items:center;
+    gap:2px;
+    background:var(--surface-soft);
+    border:1px solid var(--border-light);
+    border-radius:999px;
+    padding:4px 6px 4px 14px;
+    min-width:0;
+  }
+  .jm-input-wrap:focus-within{ border-color:var(--spark-1); }
+  .jm-attach{
+    width:26px; height:26px;
+    flex-shrink:0;
+    border:none; background:transparent;
+    color:var(--muted);
+    display:flex; align-items:center; justify-content:center;
+    cursor:default;
+  }
+  #jm-input{
+    flex:1;
+    min-width:0;
+    resize:none;
+    max-height:96px;
+    background:transparent;
+    border:none;
+    color:var(--navy);
+    font-family:'Inter', sans-serif;
+    font-size:14px;
+    padding:9px 6px;
+    outline:none;
+  }
+  #jm-input::placeholder{ color:var(--muted); }
+
+  #jm-send{
+    width:40px; height:40px;
+    border-radius:50%;
+    border:none;
+    background:var(--brand-blue);
+    color:#fff;
+    cursor:pointer;
+    display:flex; align-items:center; justify-content:center;
+    flex-shrink:0;
+    transition: transform .15s ease, box-shadow .15s ease;
+  }
+  #jm-send:hover{ transform:translateY(-1px); box-shadow:0 6px 16px -4px rgba(30,42,107,0.5); }
+  #jm-send:disabled{ opacity:.4; cursor:default; transform:none; box-shadow:none; }
+
+  #jm-footer-note{
+    text-align:center;
+    font-size:10.5px;
+    color:var(--muted);
+    padding:9px 16px 13px;
+    background:#fff;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    gap:5px;
+  }
+  #jm-footer-note svg{ flex-shrink:0; }
+
+  @media (max-width: 420px){
+    #jm-panel{ right:12px; left:12px; width:auto; bottom:92px; }
+    #jm-launcher{ right:16px; bottom:16px; }
+  }
+</style>
+</head>
+<body>
+
+<a class="ca-page-back" href="index.html">&larr; Back to Career Marketplace</a>
+
+<div id="ca-login-bar">
+  <button id="ca-login-btn" type="button">Sign in with Okta</button>
+  <div id="ca-user-bar" hidden>
+    <span id="ca-user-name"></span>
+    <button id="ca-logout-btn" type="button">Sign out</button>
+  </div>
+</div>
+
+<script>
+  window.CAREER_ASSISTANT_DEFER_AUTH_PROVIDER = true;
+  window.JM_CONFIG = {
+    brandTitle: "Employer Assistance",
+    statusOnline: "Always here to help",
+    statusAuthenticated: "Secure authenticated session",
+    statusOffline: "Leave us a message",
+    greeting: "Hi there! I'd be happy to help you find your next role.",
+    autoStartConversation: true,
+    // Confirmed against this deployment via live testing on 2026-07-14:
+    // configureConversation -> (joinConversation, since autoStart is ON
+    // for this deployment) -> sendMessage. Commands use the callback
+    // signature: Genesys("command", name, data, successFn, failFn).
+    commands: {
+      configureConversation: "MessagingService.configureConversation",
+      joinConversation: "MessagingService.joinConversation",
+      sendMessage: "MessagingService.sendMessage",
+      sendTyping: "MessagingService.sendTyping",
+      clearConversation: "MessagingService.clearConversation"
+    }
+  };
+</script>
+
+<script type="text/javascript" charset="utf-8">
+  (function (g, e, n, es, ys) {
+    g['_genesysJs'] = e;
+    g[e] = g[e] || function () {
+      (g[e].q = g[e].q || []).push(arguments)
+    };
+    g[e].t = 1 * new Date();
+    g[e].c = es;
+    ys = document.createElement('script'); ys.async = 1; ys.src = n; ys.charset = 'utf-8'; document.head.appendChild(ys);
+  })(window, 'Genesys', 'https://apps.mypurecloud.com.au/genesys-bootstrap/genesys.min.js', {
+    environment: 'prod-apse2',
+    headlessMode: true,
+    // Auth-enabled deployment (same as main portal). d1257176 is messaging-only — no OIDC integration.
+    deploymentId: '80372e7d-209b-4b93-ae33-e3078f7f8df2'
+  });
+</script>
+<script>
+  window.CareerMarketplaceGenesys = { DEPLOYMENT_ID: '80372e7d-209b-4b93-ae33-e3078f7f8df2' };
+</script>
+<script src="career-assistant-auth.js"></script>
+<script src="debug.js"></script>
+<script src="genesys-auth-provider.js"></script>
+
+<button id="jm-launcher" aria-label="Open chat" aria-haspopup="dialog" aria-expanded="false">
+  <svg width="22" height="22" viewBox="0 0 24 24" fill="#fff" aria-hidden="true">
+    <path d="M12 2l1.6 4.8L18 8.5l-4.4 1.7L12 15l-1.6-4.8L6 8.5l4.4-1.7L12 2Z"/>
+  </svg>
+  <span class="jm-badge" id="jm-badge" hidden>1</span>
+</button>
+
+<section id="jm-panel" role="dialog" aria-modal="false" aria-label="Chat window">
+  <header id="jm-header">
+    <div class="jm-header-brand">
+      <div class="jm-brand-mark" aria-hidden="true">CM</div>
+      <div class="jm-header-meta">
+        <div class="jm-brand-word">Career Marketplace</div>
+        <div class="jm-brand-sub">
+          <div class="jm-subtitle" id="jm-title"></div>
+          <div class="jm-online-status"><span class="jm-dot"></span><span>Online</span></div>
+        </div>
+      </div>
+    </div>
+    <div class="jm-header-actions">
+      <button id="jm-delete" type="button" aria-label="Delete chat" title="Delete chat">
+        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+          <path d="M4 7h16M9 7V5a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v2M10 11v6M14 11v6M6 7l1 13a1 1 0 0 0 1 .9h8a1 1 0 0 0 1-.9L18 7" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/>
+        </svg>
+      </button>
+      <button id="jm-close" aria-label="Close chat">&#10005;</button>
+      <div class="jm-menu-wrap">
+        <button id="jm-menu-btn" type="button" aria-label="More options" aria-haspopup="menu" aria-expanded="false" aria-controls="jm-menu">&#8943;</button>
+        <div id="jm-menu" role="menu" hidden>
+          <div id="jm-menu-user" class="jm-menu-user" hidden>
+            <svg class="jm-menu-icon" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+              <path d="M12 12a4 4 0 1 0 0-8 4 4 0 0 0 0 8Z" stroke="currentColor" stroke-width="1.6"/>
+              <path d="M4 20c0-3.3 3.6-6 8-6s8 2.7 8 6" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/>
+            </svg>
+            <span class="jm-menu-label">
+              <span class="jm-menu-title" id="jm-menu-user-name"></span>
+            </span>
+          </div>
+          <button id="jm-menu-sign-in" class="jm-menu-item" type="button" role="menuitem">
+            <svg class="jm-menu-icon" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+              <path d="M12 12a4 4 0 1 0 0-8 4 4 0 0 0 0 8Z" stroke="currentColor" stroke-width="1.6"/>
+              <path d="M4 20c0-3.3 3.6-6 8-6s8 2.7 8 6" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/>
+            </svg>
+            <span class="jm-menu-label">
+              <span class="jm-menu-title" id="jm-menu-sign-in-title">Sign in</span>
+              <span class="jm-menu-desc">Sign in with Okta</span>
+            </span>
+          </button>
+          <button id="jm-menu-sign-out" class="jm-menu-item" type="button" role="menuitem" hidden>
+            <svg class="jm-menu-icon" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+              <path d="M10 7V6a2 2 0 0 1 2-2h7v16h-7a2 2 0 0 1-2-2v-1" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/>
+              <path d="M14 12H4m0 0 3-3m-3 3 3 3" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/>
+            </svg>
+            <span class="jm-menu-label">
+              <span class="jm-menu-title">Sign out</span>
+              <span class="jm-menu-desc" id="jm-menu-sign-out-desc">End your session</span>
+            </span>
+          </button>
+        </div>
+      </div>
+    </div>
+  </header>
+
+  <div id="jm-messages"></div>
+
+  <div id="jm-typing" aria-live="polite">
+    <span class="jm-eq" aria-hidden="true"><span></span><span></span><span></span><span></span><span></span></span>
+    <span id="jm-typing-label">typing…</span>
+  </div>
+
+  <div id="jm-inputbar">
+    <div class="jm-input-wrap">
+      <button class="jm-attach" type="button" tabindex="-1" aria-hidden="true">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none"><path d="M17 7l-7.5 7.5a2.5 2.5 0 0 0 3.54 3.54L21 10.07a4.5 4.5 0 1 0-6.36-6.36L6.5 11.85a6.5 6.5 0 0 0 9.19 9.19" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg>
+      </button>
+      <textarea id="jm-input" rows="1" placeholder="Type your message…" aria-label="Message"></textarea>
+    </div>
+    <button id="jm-send" aria-label="Send message">
+      <svg width="17" height="17" viewBox="0 0 24 24" fill="none"><path d="M3 11.5L21 3L13 21L11 13L3 11.5Z" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"/></svg>
+    </button>
+  </div>
+  <div id="jm-footer-note">
+    <svg width="11" height="11" viewBox="0 0 24 24" fill="none"><path d="M6 11V8a6 6 0 1 1 12 0v3M5 11h14v9a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2v-9Z" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"/></svg>
+    Your conversations are secure and private.
+  </div>
+</section>
+
+<script>
+(function(){
+  var CFG = window.JM_CONFIG;
+  var launcher = document.getElementById('jm-launcher');
+  var panel = document.getElementById('jm-panel');
+  var closeBtn = document.getElementById('jm-close');
+  var deleteBtn = document.getElementById('jm-delete');
+  var messagesEl = document.getElementById('jm-messages');
+  var typingEl = document.getElementById('jm-typing');
+  var typingLabel = document.getElementById('jm-typing-label');
+  var input = document.getElementById('jm-input');
+  var sendBtn = document.getElementById('jm-send');
+  var badge = document.getElementById('jm-badge');
+  var loginBtn = document.getElementById('ca-login-btn');
+  var userBar = document.getElementById('ca-user-bar');
+  var userName = document.getElementById('ca-user-name');
+  var logoutBtn = document.getElementById('ca-logout-btn');
+  var menuBtn = document.getElementById('jm-menu-btn');
+  var menuPanel = document.getElementById('jm-menu');
+  var menuUserRow = document.getElementById('jm-menu-user');
+  var menuUserName = document.getElementById('jm-menu-user-name');
+  var menuSignIn = document.getElementById('jm-menu-sign-in');
+  var menuSignInTitle = document.getElementById('jm-menu-sign-in-title');
+  var menuSignOut = document.getElementById('jm-menu-sign-out');
+  var menuSignOutDesc = document.getElementById('jm-menu-sign-out-desc');
+
+  document.getElementById('jm-title').textContent = CFG.brandTitle;
+
+  function closeMenu(){
+    menuPanel.hidden = true;
+    menuBtn.setAttribute('aria-expanded', 'false');
+  }
+
+  function isSignedIn(){
+    return oktaSignedIn || !userBar.hidden;
+  }
+
+  function syncAuthUi(){
+    var signedIn = isSignedIn();
+    var displayName = userName.textContent || 'Signed in';
+    if(!signedIn){
+      loginBtn.hidden = false;
+      loginBtn.style.display = '';
+      userBar.hidden = true;
+      logoutBtn.classList.remove('is-highlighted');
+      menuSignIn.hidden = false;
+      menuSignIn.style.display = '';
+      menuSignOut.hidden = true;
+      menuSignOut.style.display = 'none';
+      menuUserRow.hidden = true;
+      menuUserRow.style.display = 'none';
+      menuSignOut.classList.remove('is-highlighted');
+    } else {
+      loginBtn.hidden = true;
+      loginBtn.style.display = 'none';
+      userBar.hidden = false;
+      logoutBtn.classList.toggle('is-highlighted', sessionAuthenticated);
+      menuSignIn.hidden = true;
+      menuSignIn.style.display = 'none';
+      menuSignOut.hidden = false;
+      menuSignOut.style.display = '';
+      menuUserRow.hidden = false;
+      menuUserRow.style.display = '';
+      menuUserName.textContent = displayName;
+      menuSignOut.classList.toggle('is-highlighted', sessionAuthenticated);
+      menuSignOutDesc.textContent = sessionAuthenticated
+        ? 'Secure authenticated session'
+        : 'Sign out';
+    }
+    menuSignIn.disabled = !!loginBtn.disabled;
+    menuSignInTitle.textContent = loginBtn.textContent === 'Sign in with Okta'
+      ? 'Sign in'
+      : loginBtn.textContent;
+  }
+
+  function refreshAuthUi(){
+    var auth = window.CareerMarketplaceAuth;
+    if(!auth?.oktaAuth) return Promise.resolve();
+    return auth.oktaAuth.isAuthenticated().then(function(authed){
+      if(authed && !oktaSignedIn){
+        return auth.getUserClaims().then(function(claims){
+          if(claims) showLoggedIn(claims);
+          else syncAuthUi();
+        });
+      }
+      if(!authed && oktaSignedIn) showLoggedOut();
+      else syncAuthUi();
+    }).catch(function(){
+      syncAuthUi();
+    });
+  }
+
+  function openMenu(){
+    refreshAuthUi().finally(function(){
+      syncAuthUi();
+      menuPanel.hidden = false;
+      menuBtn.setAttribute('aria-expanded', 'true');
+    });
+  }
+
+  function toggleMenu(){
+    if(menuPanel.hidden) openMenu();
+    else closeMenu();
+  }
+
+  menuBtn.addEventListener('click', function(e){
+    e.stopPropagation();
+    toggleMenu();
+  });
+
+  menuSignIn.addEventListener('click', function(){
+    closeMenu();
+    loginBtn.click();
+  });
+
+  menuSignOut.addEventListener('click', function(){
+    closeMenu();
+    logoutBtn.click();
+  });
+
+  document.addEventListener('click', function(e){
+    if(!menuPanel.hidden && !e.target.closest('.jm-menu-wrap')){
+      closeMenu();
+    }
+  });
+
+  panel.addEventListener('keydown', function(e){
+    if(e.key === 'Escape' && !menuPanel.hidden) closeMenu();
+  });
+
+  var unread = 0;
+  var isOpen = false;
+  var sessionAuthenticated = false;
+  var oktaSignedIn = false;
+  var typingHideTimer = null;
+  var clientTypingTimer = null;
+
+  function setAuthDotsState(state){
+    syncAuthUi();
+  }
+
+  function showLoggedOut(){
+    oktaSignedIn = false;
+    sessionAuthenticated = false;
+    authUpgradeAttempted = false;
+    loginBtn.hidden = false;
+    loginBtn.style.display = '';
+    loginBtn.disabled = false;
+    loginBtn.textContent = 'Sign in with Okta';
+    userBar.hidden = true;
+    syncAuthUi();
+  }
+
+  function showLoggedIn(claims){
+    oktaSignedIn = true;
+    authUpgradeAttempted = false;
+    loginBtn.hidden = true;
+    loginBtn.style.display = 'none';
+    userBar.hidden = false;
+    userName.textContent = claims?.name || claims?.email || claims?.sub || 'Signed in';
+    syncAuthUi();
+    setGenesysCustomerAttributes();
+  }
+
+  var sessionActive = false;
+  var configurePromiseDone = false;
+  var pendingQueue = [];
+  var greetingShown = false;
+  var messagingSessionReady = false;
+  var authUpgradeAttempted = false;
+  var seenMessageIds = Object.create(null);
+  var sessionRestoredOnce = false;
+  var clearingConversation = false;
+  var clearConversationFallbackTimer = null;
+  var TYPING_TIMEOUT_MS = 45000;
+
+  function isOutboundToCustomer(body){
+    var direction = String(
+      body.direction || body.messageDirection || body.messageType || ''
+    ).toLowerCase();
+    var entity = String(
+      body.originatingEntity || (body.channel && body.channel.from && body.channel.from.type) || ''
+    ).toLowerCase();
+    if(direction === 'inbound'){
+      return entity === 'bot' || entity === 'agent' || entity === 'system';
+    }
+    if(direction === 'outbound') return true;
+    if(entity === 'human' || entity === 'customer' || entity === 'guest') return false;
+    return true;
+  }
+
+  function isMenuContainer(item){
+    if(!item || typeof item !== 'object') return false;
+    var type = String(item.type || item.contentType || '').toLowerCase();
+    if(type === 'card') return false;
+    return type === 'quick-replies' || type === 'generic' || type === 'carousel' ||
+      type === 'list-vertical' || type === 'single-selection-list';
+  }
+
+  function dedupeMenuItems(items){
+    var out = [];
+    var seen = Object.create(null);
+    (items || []).forEach(function(item){
+      if(!item) return;
+      var label = String(item.label || item.text || item.displayText || item.name || '').trim();
+      if(!label) return;
+      var payload = item.payload != null ? String(item.payload) : label;
+      var key = label.toLowerCase() + '::' + payload.toLowerCase();
+      if(seen[key]) return;
+      seen[key] = true;
+      out.push({ label: label, payload: payload });
+    });
+    return out;
+  }
+
+  function hidePreviousQuickReplyMenus(){
+    var wraps = messagesEl.querySelectorAll('.jm-row.them .jm-quickreplies');
+    for(var i = 0; i < wraps.length - 1; i++){
+      wraps[i].remove();
+    }
+  }
+
+  function logInboundRaw(rawBody, meta){
+    window.__caInboundLog = window.__caInboundLog || [];
+    window.__caInboundLog.push({
+      at: Date.now(),
+      source: meta.source || 'unknown',
+      body: rawBody
+    });
+    if(window.__caInboundLog.length > 80){
+      window.__caInboundLog.splice(0, window.__caInboundLog.length - 80);
+    }
+  }
+
+  function ingestInboundMessages(messages, meta){
+    meta = meta || {};
+    if(!Array.isArray(messages) || !messages.length) return;
+
+    var pendingMenuItems = null;
+
+    messages.forEach(function(rawBody){
+      logInboundRaw(rawBody, meta);
+      var body = unwrapMessageEnvelope(rawBody);
+      body = unwrapGenesysPayload(body) || body;
+      if(!body || typeof body !== 'object') return;
+      if(!isOutboundToCustomer(body)) return;
+
+      var msgType = String(body.type || '').toLowerCase();
+      if(msgType === 'event' || msgType === 'receipt') return;
+
+      var id = messageDedupeKey(body);
+      if(id && seenMessageIds[id]) return;
+
+      window.__caLastGenesysMessage = body;
+      var parsed = parseInboundMessage(body);
+
+      if(!parsed.text && !parsed.menuItems.length){
+        if(body.text) parsed.text = String(body.text);
+        else {
+          console.debug('[career-assistant] no renderable content', {
+            type: body.type,
+            contentType: body.contentType,
+            keys: Object.keys(body),
+            content: body.content
+          });
+          return;
+        }
+      }
+
+      if(id) seenMessageIds[id] = true;
+      showTyping(false);
+      if(!isOpen) setUnread(unread + 1);
+
+      console.debug('[career-assistant] inbound message', {
+        type: body.type,
+        contentType: body.contentType,
+        menuCount: parsed.menuItems.length,
+        textPreview: parsed.text ? String(parsed.text).slice(0, 80) : null,
+        content: body.content
+      });
+
+      if(parsed.text && parsed.menuItems.length){
+        hidePreviousQuickReplyMenus();
+        addBubble(String(parsed.text), 'them', {
+          menuItems: parsed.menuItems,
+          rich: parsed.rich
+        });
+        pendingMenuItems = null;
+        return;
+      }
+
+      if(parsed.text){
+        addBubble(String(parsed.text), 'them', { rich: parsed.rich });
+      }
+
+      if(parsed.menuItems.length){
+        pendingMenuItems = parsed.menuItems;
+        if(!parsed.text){
+          hidePreviousQuickReplyMenus();
+          if(attachMenuToLastBubble(parsed.menuItems)){
+            pendingMenuItems = null;
+          }
+        }
+      }
+    });
+
+    if(pendingMenuItems && pendingMenuItems.length){
+      hidePreviousQuickReplyMenus();
+      if(!attachMenuToLastBubble(pendingMenuItems)){
+        addBubble('Please choose an option:', 'them', { menuItems: pendingMenuItems });
+      }
+    }
+  }
+
+  function extractGenesysMessagesFromEvent(e){
+    if(!e) return [];
+    var data = e.data || e;
+    if(Array.isArray(data.messages)) return data.messages.map(unwrapMessageEnvelope);
+    if(Array.isArray(data.oldMessages)) return data.oldMessages.map(unwrapMessageEnvelope);
+    if(data.message) return [unwrapMessageEnvelope(data.message)];
+    if(data.body && (data.body.type || data.body.content)) return [unwrapMessageEnvelope(data.body)];
+    if(Array.isArray(data)) return data.map(unwrapMessageEnvelope);
+    return [];
+  }
+
+  function bootGenesysAuthIfNeeded(){
+    if(!oktaSignedIn || sessionAuthenticated || window.__caGenesysAuthBooted) return;
+    window.enableCareerAssistantGenesysAuth?.();
+    window.CareerMarketplaceGenesysAuth?.queueAutoAuth?.('messaging-ready');
+  }
+
+  function resetMessagingSession(){
+    sessionActive = false;
+    configurePromiseDone = false;
+    messagingSessionReady = false;
+  }
+
+  function rebindMessagingSession(){
+    resetMessagingSession();
+    if(isOpen) ensureSessionReady();
+  }
+
+  function triggerMessagingAuth(source){
+    if(!oktaSignedIn || sessionAuthenticated) return;
+    if(!messagingSessionReady || !sessionActive) return;
+    if(authUpgradeAttempted) return;
+    authUpgradeAttempted = true;
+    console.debug('[career-assistant] triggerMessagingAuth', source);
+    window.CareerMarketplaceGenesysAuth?.queueAutoAuth?.(source);
+  }
+
+  function logAuthenticatedStatus(source, detail){
+    var payload = Object.assign({ authenticated: true, source: source || 'unknown' }, detail || {});
+    console.log('✅ [AUTH TRACE] AUTHENTICATED — Genesys web messaging session authenticated', payload);
+    if(window.CareerMarketplaceTrace){
+      window.CareerMarketplaceTrace.success('AUTHENTICATED', payload);
+    }
+  }
+
+  function showGenesysAuthed(detail, meta){
+    meta = meta || {};
+    var justAuthed = !sessionAuthenticated;
+    sessionAuthenticated = true;
+    authUpgradeAttempted = true;
+    updateSessionStatus(true);
+    syncAuthUi();
+    setGenesysCustomerAttributes();
+    if(justAuthed){
+      logAuthenticatedStatus('showGenesysAuthed', detail);
+      if(meta.newSession){
+        rebindMessagingSession();
+      } else {
+        sessionActive = true;
+        messagingSessionReady = true;
+        flushPending();
+      }
+      if(isOpen) addSystemLine('You are connected with a secure authenticated session.');
+    }
+  }
+
+  loginBtn.addEventListener('click', function(){
+    window.CareerMarketplaceAuth?.signIn?.();
+  });
+  logoutBtn.addEventListener('click', function(){
+    window.CareerMarketplaceAuth?.signOut?.();
+  });
+
+  if(window.CareerMarketplaceAuth){
+    CareerMarketplaceAuth.callbacks.onUnauthenticated = showLoggedOut;
+    CareerMarketplaceAuth.callbacks.onAuthenticated = showLoggedIn;
+    CareerMarketplaceAuth.callbacks.onRedirecting = function(){
+      loginBtn.disabled = true;
+      loginBtn.textContent = 'Redirecting to Okta…';
+      syncAuthUi();
+    };
+    CareerMarketplaceAuth.callbacks.onHandlingCallback = function(){
+      loginBtn.disabled = true;
+      loginBtn.textContent = 'Completing sign-in…';
+      syncAuthUi();
+    };
+  }
+
+  window.addEventListener('ca:genesys-authenticated', function(e){
+    showGenesysAuthed(e.detail);
+  });
+  window.addEventListener('ca:genesys-auth-error', function(){
+    syncAuthUi();
+    addSystemLine('Messaging authentication failed — try signing out and back in.');
+  });
+
+  window.addEventListener('ca:genesys-auth-unavailable', function(){
+    syncAuthUi();
+    console.warn('[career-assistant] Genesys auth not enabled on this deployment');
+  });
+
+  Genesys('subscribe', 'Auth.authenticating', function(){
+    syncAuthUi();
+  });
+
+  Genesys('subscribe', 'Auth.signInFailed', function(){
+    syncAuthUi();
+  });
+
+  Genesys('subscribe', 'Auth.authError', function(){
+    syncAuthUi();
+  });
+
+  Genesys('subscribe', 'Auth.loggedOut', function(){
+    sessionAuthenticated = false;
+    authUpgradeAttempted = false;
+    if(oktaSignedIn){
+      syncAuthUi();
+    } else {
+      showLoggedOut();
+    }
+  });
+
+  refreshAuthUi();
+
+  function scrollToBottom(){
+    messagesEl.scrollTop = messagesEl.scrollHeight;
+  }
+
+  function timeNow(){
+    return new Date().toLocaleTimeString([], { hour:'2-digit', minute:'2-digit' });
+  }
+
+  var THEM_AVATAR_SVG = '<svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor"><path d="M12 2l1.6 4.8L18 8.5l-4.4 1.7L12 15l-1.6-4.8L6 8.5l4.4-1.7L12 2Z"/></svg>';
+  var ME_AVATAR_SVG = '<svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor"><path d="M12 12a4.5 4.5 0 1 0 0-9 4.5 4.5 0 0 0 0 9Z"/><path d="M4 20.5a8 8 0 0 1 16 0" stroke="currentColor" stroke-width="1.6" fill="none" stroke-linecap="round"/></svg>';
+  var CHECK_SVG = '<svg width="14" height="14" viewBox="0 0 24 24" fill="none"><path d="M2 12.5l4.5 4.5L12 11M9.5 17L20 6.5" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>';
+
+  function buildCustomerAttributes(){
+    var attrs = {};
+    var name = userName.textContent;
+    if(name && name !== 'Signed in') attrs.name = name;
+    return attrs;
+  }
+
+  function setGenesysCustomerAttributes(){
+    var attrs = buildCustomerAttributes();
+    if(!Object.keys(attrs).length) return;
+    Genesys('command', 'Database.set', { messaging: { customAttributes: attrs } },
+      function(){ console.debug('[career-assistant] Database.set ok', attrs); },
+      function(err){ console.debug('[career-assistant] Database.set skipped', err); }
+    );
+  }
+
+  function addBubble(text, from, opts){
+    opts = opts || {};
+
+    var row = document.createElement('div');
+    row.className = 'jm-row ' + from;
+
+    var avatar = document.createElement('div');
+    avatar.className = 'jm-avatar';
+    avatar.innerHTML = from === 'me' ? ME_AVATAR_SVG : THEM_AVATAR_SVG;
+
+    var col = document.createElement('div');
+    col.className = 'jm-bubble-col';
+
+    var bubble = document.createElement('div');
+    bubble.className = 'jm-bubble' + (opts.rich ? ' jm-bubble-rich' : '');
+    bubble.textContent = text;
+
+    col.appendChild(bubble);
+
+    var menuItems = opts.menuItems || opts.quickReplies;
+    if(menuItems && menuItems.length){
+      col.appendChild(buildMenuWrap(menuItems));
+    }
+
+    var time = document.createElement('div');
+    time.className = 'jm-time';
+    var timeText = document.createElement('span');
+    timeText.textContent = timeNow();
+    time.appendChild(timeText);
+    if(from === 'me'){
+      var check = document.createElement('span');
+      check.className = 'jm-check';
+      check.innerHTML = CHECK_SVG;
+      time.appendChild(check);
+    }
+    col.appendChild(time);
+
+    row.appendChild(avatar);
+    row.appendChild(col);
+    messagesEl.appendChild(row);
+    scrollToBottom();
+  }
+
+  function buildMenuWrap(items){
+    var wrap = document.createElement('div');
+    wrap.className = 'jm-quickreplies';
+    dedupeMenuItems(items).forEach(function(item){
+      var label = item.label || item.text || item.displayText || item.name
+        || (item.quickReply && item.quickReply.text);
+      if(!label) return;
+      var payload = item.payload != null ? item.payload
+        : item.postback || item.value
+        || (item.quickReply && (item.quickReply.payload || item.quickReply.text))
+        || label;
+      var btn = document.createElement('button');
+      btn.className = 'jm-chip';
+      btn.type = 'button';
+      btn.textContent = label;
+      btn.addEventListener('click', function(){
+        wrap.remove();
+        addBubble(label, 'me');
+        showTyping(true, sessionAuthenticated ? 'Employer Assistance is typing…' : 'typing…');
+        doSend(payload);
+      });
+      wrap.appendChild(btn);
+    });
+    return wrap;
+  }
+
+  function unwrapMessageEnvelope(raw){
+    raw = parseJsonMaybe(raw);
+    if(!raw || typeof raw !== 'object') return raw;
+    if(raw.body && typeof raw.body === 'object' &&
+        (raw.body.type || raw.body.direction || raw.body.content || raw.body.text)){
+      return unwrapMessageEnvelope(raw.body);
+    }
+    if(raw.message && typeof raw.message === 'object'){
+      return unwrapMessageEnvelope(raw.message);
+    }
+    return raw;
+  }
+
+  function collectPostbackAction(items, seen, action){
+    if(!action || typeof action !== 'object') return;
+    var actionType = String(action.type || '').toLowerCase();
+    var label = action.text || action.label || action.title || action.name;
+    var payload = action.payload || action.postback || action.value || label;
+    if(!label) return;
+    if(actionType && actionType !== 'postback' && actionType !== 'message' && actionType !== 'button') return;
+    pushMenuItem(items, seen, label, payload);
+  }
+
+  function parseJsonMaybe(value){
+    if(typeof value !== 'string') return value;
+    var trimmed = value.trim();
+    if(!trimmed || (trimmed.charAt(0) !== '{' && trimmed.charAt(0) !== '[')) return value;
+    try { return JSON.parse(trimmed); } catch(e) { return value; }
+  }
+
+  function unwrapGenesysPayload(value){
+    value = parseJsonMaybe(value);
+    if(!value || typeof value !== 'object') return null;
+    var ct = String(value.contentType || value.type || '').toLowerCase();
+    if(ct.indexOf('application/vnd.genesys') !== -1 || ct === 'application/json'){
+      return unwrapGenesysPayload(value.content);
+    }
+    if(value.content && typeof value.content === 'object' && !Array.isArray(value.content)){
+      var innerCt = String(value.content.contentType || value.content.type || '').toLowerCase();
+      if(value.quickReplies || value.choices || value.components ||
+          innerCt === 'quick-replies' || innerCt === 'generic' || innerCt === 'list-vertical' ||
+          innerCt === 'carousel' || innerCt === 'single-selection-list' ||
+          innerCt.indexOf('application/vnd.genesys') !== -1){
+        return unwrapGenesysPayload(value.content);
+      }
+    }
+    return value;
+  }
+
+  function normalizeContentArray(body){
+    var merged = [];
+
+    function pushItem(item){
+      item = unwrapGenesysPayload(item);
+      if(!item) return;
+      if(Array.isArray(item)){
+        item.forEach(pushItem);
+        return;
+      }
+      if(typeof item !== 'object') return;
+
+      var nested = []
+        .concat(Array.isArray(item.content) ? item.content : [])
+        .concat(Array.isArray(item.elements) ? item.elements : [])
+        .concat(Array.isArray(item.components) ? item.components : [])
+        .concat(Array.isArray(item.quickReplies) ? item.quickReplies : [])
+        .concat(Array.isArray(item.choices) ? item.choices : [])
+        .concat(Array.isArray(item.actions) ? item.actions : [])
+        .concat(item.card && Array.isArray(item.card.actions) ? item.card.actions : []);
+
+      if(isMenuContainer(item) && nested.length){
+        nested.forEach(pushItem);
+        return;
+      }
+
+      merged.push(item);
+    }
+
+    function pushArray(arr){
+      if(!Array.isArray(arr)) return;
+      arr.forEach(pushItem);
+    }
+
+    pushItem(parseJsonMaybe(body.content));
+    pushArray(body.contents);
+    pushArray(body.elements);
+    if(body.structured){
+      pushItem(body.structured.content);
+      pushArray(body.structured.elements);
+      pushArray(body.structured.quickReplies);
+    }
+    pushArray(body.quickReplies);
+    pushArray(body.choices);
+    pushArray(body.actions);
+
+    pushArray(body.attachments);
+    pushArray(body.suggestedActions);
+    pushItem(body.body);
+    pushItem(body.richContent);
+    pushItem(body.payload);
+
+    return merged;
+  }
+
+  function deepScanMenuItems(node, items, seen, depth){
+    if(!node || depth > 10) return;
+    if(Array.isArray(node)){
+      node.forEach(function(entry){ deepScanMenuItems(entry, items, seen, depth + 1); });
+      return;
+    }
+    if(typeof node !== 'object') return;
+
+    if(node.quickReply && (node.quickReply.text || node.quickReply.payload)){
+      var qrLabel = node.quickReply.text || node.quickReply.payload;
+      pushMenuItem(items, seen, qrLabel, node.quickReply.payload || node.quickReply.text);
+    }
+
+    var type = String(node.type || node.contentType || '').toLowerCase();
+    if(type === 'postback' || type === 'message'){
+      var postLabel = node.text || node.label || node.title;
+      if(postLabel) pushMenuItem(items, seen, postLabel, node.payload || node.postback || postLabel);
+    }
+    if(type === 'quick-reply' || type === 'quickreply' || type === 'button' ||
+        type === 'link' || type === 'list-item' || type === 'list-item-big'){
+      var label = node.text || node.title || node.label || node.name;
+      var payload = node.payload || node.value || actionPayload(node.actions) || label;
+      if(label) pushMenuItem(items, seen, label, payload);
+    } else if(node.title && actionPayload(node.actions)){
+      pushMenuItem(items, seen, node.title, actionPayload(node.actions));
+    }
+
+    Object.keys(node).forEach(function(prop){
+      if(prop === 'text' && typeof node.text === 'string' && !node.type && !node.contentType) return;
+      deepScanMenuItems(node[prop], items, seen, depth + 1);
+    });
+  }
+
+  function actionPayload(actions){
+    if(!actions) return null;
+    if(Array.isArray(actions)){
+      var first = actions[0];
+      return first && (first.payload || first.postback || first.text || first.textback || first.value);
+    }
+    return actions.textback || actions.postback || actions.payload || actions.value || null;
+  }
+
+  function pushMenuItem(items, seen, label, payload){
+    if(!label) return;
+    var key = String(label).trim().toLowerCase() + '::' + String(payload != null ? payload : label).toLowerCase();
+    if(seen && seen[key]) return;
+    if(seen) seen[key] = true;
+    items.push({
+      label: String(label),
+      payload: payload != null ? String(payload) : String(label)
+    });
+  }
+
+  function collectMenuFromComponent(items, seen, comp){
+    if(!comp) return;
+    comp = unwrapGenesysPayload(comp) || comp;
+    var type = String(comp.type || comp.contentType || '').toLowerCase();
+
+    if(comp.contentType === 'QuickReply' && comp.quickReply){
+      pushMenuItem(items, seen, comp.quickReply.text, comp.quickReply.payload || comp.quickReply.text);
+      return;
+    }
+    if(type === 'card' || comp.contentType === 'Card'){
+      var card = comp.card || comp;
+      if(Array.isArray(card.actions)){
+        card.actions.forEach(function(action){ collectPostbackAction(items, seen, action); });
+      }
+      return;
+    }
+    if(comp.card && Array.isArray(comp.card.actions)){
+      comp.card.actions.forEach(function(action){ collectPostbackAction(items, seen, action); });
+    }
+    if(type === 'quick-replies' || type === 'quickreply'){
+      if(Array.isArray(comp.content)){
+        comp.content.forEach(function(nested){ collectMenuFromComponent(items, seen, nested); });
+      }
+      if(Array.isArray(comp.quickReplies)){
+        comp.quickReplies.forEach(function(nested){ collectMenuFromComponent(items, seen, nested); });
+      }
+      return;
+    }
+    if(type === 'quick-reply' || type === 'quickreply'){
+      pushMenuItem(items, seen, comp.text || comp.title || comp.label || comp.displayText || comp.name,
+        comp.payload || comp.postback || comp.value || comp.text || comp.title);
+      return;
+    }
+    if(type === 'postback' || type === 'message'){
+      pushMenuItem(items, seen, comp.text || comp.label || comp.title || comp.name,
+        comp.payload || comp.postback || comp.value || comp.text);
+      return;
+    }
+    if(type === 'button' || type === 'link'){
+      pushMenuItem(items, seen, comp.text || comp.title || comp.label,
+        actionPayload(comp.actions) || comp.text || comp.title);
+      return;
+    }
+    if(type === 'list-item' || type === 'list-item-big'){
+      pushMenuItem(items, seen, comp.title || comp.text,
+        actionPayload(comp.actions) || comp.title || comp.text);
+      return;
+    }
+    if(comp.title && actionPayload(comp.actions)){
+      pushMenuItem(items, seen, comp.title, actionPayload(comp.actions));
+    }
+    if(Array.isArray(comp.components)){
+      comp.components.forEach(function(nested){ collectMenuFromComponent(items, seen, nested); });
+    }
+    if(Array.isArray(comp.quickReplies)){
+      comp.quickReplies.forEach(function(nested){ collectMenuFromComponent(items, seen, nested); });
+    }
+  }
+
+  function extractMenuItems(body, contentArr){
+    var items = [];
+    var seen = Object.create(null);
+    var rootType = String(body.contentType || body.type || '').toLowerCase();
+
+    contentArr.forEach(function(block){
+      collectMenuFromComponent(items, seen, block);
+      if(block.quickReply){
+        pushMenuItem(items, seen, block.quickReply.text, block.quickReply.payload || block.quickReply.text);
+      }
+      if(block.title){
+        var cardPayload = actionPayload(block.actions);
+        var cardTypes = ['generic', 'carousel', 'card', ''];
+        if(cardPayload || cardTypes.indexOf(rootType) !== -1){
+          pushMenuItem(items, seen, block.title, cardPayload || block.title);
+        }
+      }
+    });
+
+    if(Array.isArray(body.quickReplies)){
+      body.quickReplies.forEach(function(q){
+        q = unwrapGenesysPayload(q) || q;
+        pushMenuItem(items, seen, q.title || q.text || q.label, q.payload || q.value || q.id || q.text);
+      });
+    }
+
+    if(Array.isArray(body.choices)){
+      body.choices.forEach(function(c){
+        c = unwrapGenesysPayload(c) || c;
+        pushMenuItem(items, seen, c.label || c.text || c.title || c.name, c.value || c.payload || c.text);
+      });
+    }
+
+    if(!items.length && (rootType === 'quick-replies' || rootType === 'quickreply')){
+      contentArr.forEach(function(c){
+        pushMenuItem(items, seen, c.text || c.label || c.title, c.payload || c.value || c.text);
+      });
+    }
+
+    if(!items.length && (rootType === 'generic' || rootType === 'carousel' || rootType === 'card')){
+      contentArr.forEach(function(c){
+        if(c.title) pushMenuItem(items, seen, c.title, actionPayload(c.actions) || c.title);
+      });
+    }
+
+    if(!items.length){
+      deepScanMenuItems(body, items, seen, 0);
+    }
+
+    return items;
+  }
+
+  function extractInboundText(body, contentArr){
+    var parts = [];
+    if(body.text) parts.push(body.text);
+    if(body.fallbackText && parts.indexOf(body.fallbackText) === -1) parts.push(body.fallbackText);
+    if(body.message){
+      if(typeof body.message === 'string') parts.push(body.message);
+      else if(body.message.text) parts.push(body.message.text);
+    }
+    if(typeof body.content === 'string') parts.push(body.content);
+
+    contentArr.forEach(function(block){
+      var blockType = String(block.contentType || block.type || '').toLowerCase();
+      if(blockType === 'text'){
+        if(block.text) parts.push(block.text);
+        if(block.content && typeof block.content === 'string') parts.push(block.content);
+      }
+      if(block.desc || block.description) parts.push(block.desc || block.description);
+      if(block.subtitle) parts.push(block.subtitle);
+    });
+
+    var merged = parts.filter(Boolean).join('\n').trim();
+    return merged || null;
+  }
+
+  function messageDedupeKey(body){
+    if(body.id) return 'id:' + body.id;
+    if(body.messageId) return 'mid:' + body.messageId;
+    if(body.messageStamp) return 'stamp:' + body.messageStamp;
+    var text = String(body.text || body.fallbackText || '').trim();
+    var type = String(body.type || '').toLowerCase();
+    var contentSig = JSON.stringify(body.content || body.quickReplies || '').slice(0, 160);
+    if(body.timestamp) return type + '::' + text + '::' + body.timestamp + '::' + contentSig;
+    return type + '::' + text.slice(0, 100) + '::' + contentSig;
+  }
+
+  function parseInboundMessage(body){
+    body = unwrapGenesysPayload(body) || body;
+    var contentArr = normalizeContentArray(body);
+    var menuItems = dedupeMenuItems(extractMenuItems(body, contentArr));
+    var text = extractInboundText(body, contentArr);
+    var rich = !!(text && text.indexOf('\n') !== -1);
+    var msgType = String(body.type || '').toLowerCase();
+
+    return {
+      text: text,
+      menuItems: menuItems,
+      rich: rich,
+      isStructured: msgType === 'structured' || msgType === 'message' || !!menuItems.length || !!body.contentType
+    };
+  }
+
+  function attachMenuToLastBubble(menuItems){
+    if(!menuItems || !menuItems.length) return false;
+    var rows = messagesEl.querySelectorAll('.jm-row.them');
+    if(!rows.length) return false;
+    var lastRow = rows[rows.length - 1];
+    if(lastRow.querySelector('.jm-quickreplies')) return false;
+    var col = lastRow.querySelector('.jm-bubble-col');
+    var timeEl = col && col.querySelector('.jm-time');
+    if(!col || !timeEl) return false;
+    col.insertBefore(buildMenuWrap(menuItems), timeEl);
+    scrollToBottom();
+    return true;
+  }
+
+  window.__caDumpLastGenesysMessage = function(){
+    var body = window.__caLastGenesysMessage || null;
+    var parsed = body ? parseInboundMessage(body) : null;
+    console.log(JSON.stringify(body, null, 2));
+    if(parsed){
+      console.log('[career-assistant] parsed menuCount:', parsed.menuItems.length, parsed.menuItems);
+    }
+    return body;
+  };
+
+  window.__caDumpInboundLog = function(limit){
+    limit = limit || 10;
+    var log = (window.__caInboundLog || []).slice(-limit);
+    log.forEach(function(entry, idx){
+      var body = unwrapGenesysPayload(entry.body) || entry.body;
+      var parsed = body ? parseInboundMessage(body) : null;
+      console.log('[' + idx + ']', entry.source, {
+        type: body && body.type,
+        contentType: body && body.contentType,
+        direction: body && body.direction,
+        menuCount: parsed ? parsed.menuItems.length : 0,
+        menuItems: parsed ? parsed.menuItems : [],
+        textPreview: parsed && parsed.text ? String(parsed.text).slice(0, 60) : null,
+        rawContent: body && body.content
+      });
+    });
+    return log;
+  };
+
+  function addSystemLine(text){
+    var line = document.createElement('div');
+    line.className = 'jm-system';
+    line.textContent = text;
+    messagesEl.appendChild(line);
+    scrollToBottom();
+  }
+
+  function showTyping(show, label){
+    if(typingHideTimer){
+      clearTimeout(typingHideTimer);
+      typingHideTimer = null;
+    }
+    typingEl.classList.toggle('jm-show', !!show);
+    if(label) typingLabel.textContent = label;
+    else typingLabel.textContent = 'typing…';
+    if(show){
+      scrollToBottom();
+      typingHideTimer = setTimeout(function(){
+        typingHideTimer = null;
+        showTyping(false);
+      }, TYPING_TIMEOUT_MS);
+    }
+  }
+
+  function setUnread(n){
+    unread = n;
+    if(unread > 0){
+      badge.hidden = false;
+      badge.textContent = unread > 9 ? '9+' : String(unread);
+    } else {
+      badge.hidden = true;
+    }
+  }
+
+  function updateSessionStatus(authenticated){
+    sessionAuthenticated = !!authenticated;
+    syncAuthUi();
+  }
+
+  function openPanel(){
+    isOpen = true;
+    panel.classList.add('jm-open');
+    launcher.setAttribute('aria-expanded','true');
+    setUnread(0);
+    if(!sessionActive){
+      if(configurePromiseDone){
+        configurePromiseDone = false;
+      }
+      ensureSessionReady();
+    } else {
+      flushPending();
+    }
+    if(greetingShown && !messagesEl.querySelector('.jm-row.them') && !typingEl.classList.contains('jm-show')){
+      showTyping(true, 'Employer Assistance is typing…');
+    }
+    input.focus();
+  }
+
+  function closePanel(){
+    isOpen = false;
+    panel.classList.remove('jm-open');
+    launcher.setAttribute('aria-expanded','false');
+    showTyping(false);
+    closeMenu();
+  }
+
+  function resetChatUi(){
+    messagesEl.innerHTML = '';
+    greetingShown = false;
+    configurePromiseDone = false;
+    sessionActive = false;
+    messagingSessionReady = false;
+    authUpgradeAttempted = false;
+    pendingQueue = [];
+    seenMessageIds = Object.create(null);
+    sessionRestoredOnce = false;
+    showTyping(false);
+    setUnread(0);
+  }
+
+  function clearChat(){
+    if(clearingConversation) return;
+    if(!sessionActive && !configurePromiseDone){
+      resetChatUi();
+      return;
+    }
+    if(!window.confirm('Delete this conversation? This cannot be undone.')) return;
+
+    clearingConversation = true;
+    deleteBtn.disabled = true;
+    deleteBtn.setAttribute('aria-busy', 'true');
+
+    Genesys('command', 'MessagingService.clearConversation', {},
+      function(resp){
+        console.debug('[career-assistant] clearConversation command accepted', resp);
+        scheduleClearConversationFallback();
+      },
+      function(err){
+        clearingConversation = false;
+        if(clearConversationFallbackTimer){
+          clearTimeout(clearConversationFallbackTimer);
+          clearConversationFallbackTimer = null;
+        }
+        deleteBtn.disabled = false;
+        deleteBtn.removeAttribute('aria-busy');
+        console.error('[career-assistant] clearConversation failed', err);
+        addSystemLine('Could not delete chat — enable Clear Conversation in Genesys Admin.');
+      }
+    );
+  }
+
+  function startNewConversation(source){
+    console.debug('[career-assistant] startNewConversation', source);
+    configurePromiseDone = true;
+    sessionActive = false;
+    messagingSessionReady = false;
+    greetingShown = true;
+    if(isOpen) showTyping(true, 'Employer Assistance is typing…');
+
+    Genesys('command', CFG.commands.configureConversation, {},
+      function(resp){
+        console.debug('[career-assistant] configureConversation ok (restart)', resp);
+        joinThenFlush();
+      },
+      function(err){
+        console.error('[career-assistant] configureConversation failed (restart)', err);
+        joinThenFlush();
+      }
+    );
+  }
+
+  function scheduleClearConversationFallback(){
+    if(clearConversationFallbackTimer){
+      clearTimeout(clearConversationFallbackTimer);
+    }
+    clearConversationFallbackTimer = setTimeout(function(){
+      clearConversationFallbackTimer = null;
+      if(!clearingConversation) return;
+      console.warn('[career-assistant] conversationCleared not received — restarting anyway');
+      onConversationCleared({ data: { fallback: true } });
+    }, 5000);
+  }
+
+  function onConversationCleared(e){
+    console.debug('[career-assistant] conversationCleared', e);
+    if(clearConversationFallbackTimer){
+      clearTimeout(clearConversationFallbackTimer);
+      clearConversationFallbackTimer = null;
+    }
+    clearingConversation = false;
+    deleteBtn.disabled = false;
+    deleteBtn.removeAttribute('aria-busy');
+    resetChatUi();
+    sessionRestoredOnce = true;
+    setGenesysCustomerAttributes();
+    startNewConversation(e && e.data && e.data.fallback ? 'clear-fallback' : 'conversationCleared');
+  }
+
+  launcher.addEventListener('click', function(){
+    isOpen ? closePanel() : openPanel();
+  });
+  closeBtn.addEventListener('click', closePanel);
+  deleteBtn.addEventListener('click', clearChat);
+
+  input.addEventListener('input', function(){
+    input.style.height = 'auto';
+    input.style.height = Math.min(input.scrollHeight, 96) + 'px';
+    notifyClientTyping();
+  });
+  input.addEventListener('keydown', function(e){
+    if(e.key === 'Enter' && !e.shiftKey){
+      e.preventDefault();
+      sendCurrentMessage();
+    }
+  });
+  sendBtn.addEventListener('click', sendCurrentMessage);
+
+  function notifyClientTyping(){
+    if(clientTypingTimer) clearTimeout(clientTypingTimer);
+    Genesys('command', CFG.commands.sendTyping, {},
+      function(){ /* ok */ },
+      function(){ /* optional — not all deployments expose sendTyping */ }
+    );
+    clientTypingTimer = setTimeout(function(){ clientTypingTimer = null; }, 1200);
+  }
+
+  function sendCurrentMessage(){
+    var text = input.value.trim();
+    if(!text) return;
+    addBubble(text, 'me');
+    input.value = '';
+    input.style.height = 'auto';
+    showTyping(true, sessionAuthenticated ? 'Employer Assistance is typing…' : 'typing…');
+
+    if(!sessionActive){
+      pendingQueue.push(text);
+      ensureSessionReady();
+      return;
+    }
+    doSend(text);
+  }
+
+  function doSend(text){
+    if(!sessionActive){
+      pendingQueue.push(text);
+      return;
+    }
+    Genesys('command', CFG.commands.sendMessage, { message: text },
+      function(resp){ console.debug('[career-assistant] sendMessage ok', resp); },
+      function(err){
+        console.error('[career-assistant] sendMessage failed', err);
+        showTyping(false);
+        addSystemLine('Message failed to send — please try again.');
+      }
+    );
+  }
+
+  function autoStartConversation(){
+    if(!CFG.autoStartConversation) return;
+    if(configurePromiseDone && sessionActive) return;
+    console.debug('[career-assistant] auto-starting conversation');
+    ensureSessionReady();
+  }
+
+  function ensureSessionReady(){
+    if(configurePromiseDone && sessionActive) return;
+    if(configurePromiseDone && !sessionActive){
+      configurePromiseDone = false;
+    }
+    configurePromiseDone = true;
+    setGenesysCustomerAttributes();
+
+    if(!greetingShown){
+      greetingShown = true;
+      if(isOpen) showTyping(true, 'Employer Assistance is typing…');
+    }
+
+    Genesys('command', CFG.commands.configureConversation, {},
+      function(resp){
+        console.debug('[career-assistant] configureConversation ok', resp);
+        if(resp && resp.isSessionActive){
+          sessionActive = true;
+          messagingSessionReady = true;
+          flushPending();
+          triggerMessagingAuth('configure-complete');
+        } else {
+          joinThenFlush();
+        }
+      },
+      function(err){
+        console.error('[career-assistant] configureConversation failed', err);
+        joinThenFlush();
+      }
+    );
+  }
+
+  function joinThenFlush(){
+    Genesys('command', CFG.commands.joinConversation, {},
+      function(resp){
+        console.debug('[career-assistant] joinConversation ok', resp);
+        sessionActive = true;
+        messagingSessionReady = true;
+        flushPending();
+        triggerMessagingAuth('join-complete');
+      },
+      function(err){
+        console.error('[career-assistant] joinConversation failed', err);
+        sessionActive = true;
+        flushPending();
+      }
+    );
+  }
+
+  function flushPending(){
+    while(pendingQueue.length && sessionActive){
+      doSend(pendingQueue.shift());
+    }
+  }
+
+  Genesys('subscribe', 'MessagingService.ready', function(e){
+    console.debug('[career-assistant] MessagingService.ready', e);
+    autoStartConversation();
+  });
+
+  Genesys('subscribe', 'MessagingService.conversationCleared', onConversationCleared);
+
+  Genesys('subscribe', 'MessagingService.clearConversationFailed', function(e){
+    console.error('[career-assistant] clearConversationFailed', e);
+    clearingConversation = false;
+    deleteBtn.disabled = false;
+    deleteBtn.removeAttribute('aria-busy');
+    addSystemLine('Could not delete chat — try again.');
+  });
+
+  Genesys('subscribe', 'MessagingService.started', function(e){
+    var authenticated = !!(e && e.data && e.data.authenticated);
+    var newSession = !!(e && e.data && e.data.newSession);
+    console.debug('[career-assistant] MessagingService.started', e);
+    messagingSessionReady = true;
+    sessionActive = true;
+    if(newSession){
+      sessionRestoredOnce = false;
+      seenMessageIds = Object.create(null);
+    }
+    if(authenticated){
+      showGenesysAuthed(e && e.data, { newSession: newSession });
+    } else {
+      flushPending();
+      bootGenesysAuthIfNeeded();
+      if(oktaSignedIn && !sessionAuthenticated){
+        triggerMessagingAuth('messaging-started');
+      }
+    }
+  });
+
+  Genesys('subscribe', 'MessagingService.error', function(e){
+    console.error('[career-assistant] MessagingService.error', e);
+    resetMessagingSession();
+    autoStartConversation();
+  });
+
+  Genesys('subscribe', 'MessagingService.restored', function(e){
+    console.debug('[career-assistant] restored', e);
+    if(sessionRestoredOnce) return;
+    sessionRestoredOnce = true;
+    ingestInboundMessages(extractGenesysMessagesFromEvent(e), { restored: true, source: 'restored' });
+  });
+
+  Genesys('subscribe', 'MessagingService.oldMessages', function(e){
+    console.debug('[career-assistant] oldMessages', e);
+    ingestInboundMessages(extractGenesysMessagesFromEvent(e), { source: 'oldMessages', historical: true });
+  });
+
+  Genesys('subscribe', 'MessagingService.messagesReceived', function(e){
+    console.debug('[career-assistant] messagesReceived', e);
+    ingestInboundMessages(extractGenesysMessagesFromEvent(e), { source: 'messagesReceived' });
+  });
+
+  // messageReceived duplicates messagesReceived on many SDK builds — rely on messagesReceived only.
+
+  window.addEventListener('message', function(ev){
+    var payload = ev.data;
+    if(!payload || typeof payload !== 'object') return;
+    var eventName = String(payload.event || payload.type || '').toLowerCase();
+    if(eventName.indexOf('messagingservice.messagesreceived') !== -1){
+      ingestInboundMessages(extractGenesysMessagesFromEvent(payload), { source: 'postMessage:messagesReceived' });
+      return;
+    }
+    if(eventName.indexOf('messagingservice.oldmessages') !== -1){
+      ingestInboundMessages(extractGenesysMessagesFromEvent(payload), { source: 'postMessage:oldMessages', historical: true });
+      return;
+    }
+    if(eventName.indexOf('messagingservice.messagereceived') !== -1){
+      return;
+    }
+    if(eventName.indexOf('messagingservice.restored') !== -1 && !sessionRestoredOnce){
+      sessionRestoredOnce = true;
+      ingestInboundMessages(extractGenesysMessagesFromEvent(payload), { restored: true });
+    }
+  });
+
+  Genesys('subscribe', 'MessagingService.typingReceived', function(e){
+    console.debug('[career-assistant] typingReceived', e);
+    var nickname = (e && e.data && e.data.nickname) || 'Employer Assistance';
+    showTyping(true, nickname + ' is typing…');
+  });
+
+  Genesys('subscribe', 'MessagingService.typingTimeout', function(){
+    console.debug('[career-assistant] typingTimeout');
+    showTyping(false);
+  });
+
+})();
+</script>
+
+</body>
+</html>
