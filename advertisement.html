@@ -1,0 +1,174 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>SEEK — Ad Purchasing</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;600;700&family=IBM+Plex+Sans:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --ink:#12193A;
+    --ink-soft:#3A4270;
+    --paper:#F5F6FA;
+    --paper-dim:#ECEEF7;
+    --blue:#2851FF;
+    --blue-dark:#1B3AC4;
+    --pink:#FF3D7F;
+    --disp:'Space Grotesk',sans-serif;
+    --body:'IBM Plex Sans',sans-serif;
+  }
+  *{box-sizing:border-box; margin:0; padding:0;}
+  body{
+    font-family:var(--body); background:var(--paper-dim); color:var(--ink);
+    -webkit-font-smoothing:antialiased; min-height:100vh;
+  }
+  a{color:inherit;}
+
+  .page-shell{max-width:1040px; margin:0 auto; padding:28px 24px 48px;}
+
+  .top-bar{
+    display:flex; align-items:center; justify-content:space-between;
+    margin-bottom:28px;
+  }
+  .brand-logo{display:block; height:28px; width:auto;}
+  .back-link{
+    display:inline-flex; align-items:center; gap:6px;
+    color:var(--blue); font-weight:600; font-size:13.5px; text-decoration:none;
+  }
+  .back-link:hover{color:var(--blue-dark);}
+  .back-link svg{width:16px; height:16px;}
+
+  .page-eyebrow{
+    font-family:var(--disp); font-size:22px; font-weight:700; color:var(--pink); margin:0 0 18px;
+  }
+
+  .ad-budget-card{
+    background:#fff; border:1px solid #E6E8EF; border-radius:16px;
+    box-shadow:0 8px 28px rgba(18,25,58,0.06); overflow:hidden;
+  }
+  .ad-budget-title{
+    text-align:center; font-family:var(--disp); font-size:28px; font-weight:700;
+    color:#0D1B4C; margin:0; padding:28px 24px 20px;
+  }
+  .ad-budget-grid{
+    display:grid;
+    grid-template-columns:minmax(200px, 1.15fr) repeat(3, minmax(0, 1fr));
+    gap:12px;
+    padding:0 20px 8px;
+    align-items:stretch;
+  }
+  .ad-budget-corner{min-height:1px;}
+  .ad-tier{
+    border:1px solid #E6E8EF; border-radius:12px; background:#F7F8FB;
+    padding:16px 14px 14px; text-align:center;
+  }
+  .ad-tier-label{font-size:13px; color:#5B647A; margin-bottom:6px;}
+  .ad-tier-ads{font-family:var(--disp); font-size:22px; font-weight:700; color:#0D1B4C; line-height:1.2;}
+  .ad-tier-price{margin-top:6px; font-family:var(--disp); font-size:20px; font-weight:700; color:#0D1B4C;}
+  .ad-tier-price span{font-size:13px; font-weight:500; color:#7A849C; margin-left:2px;}
+  .ad-feature-label{
+    padding:18px 8px 18px 4px; border-top:1px solid #ECEEF4;
+    display:flex; flex-direction:column; justify-content:center;
+  }
+  .ad-feature-name{font-size:14px; font-weight:700; color:#1A2340;}
+  .ad-feature-desc{font-size:12px; color:#7A849C; margin-top:4px; line-height:1.4;}
+  .ad-feature-cell{
+    border-top:1px solid #ECEEF4; padding:16px 10px; text-align:center;
+    font-size:13px; color:#2A3354; line-height:1.45;
+    display:flex; align-items:center; justify-content:center;
+  }
+  .ad-budget-banner{
+    margin:16px 20px 20px; background:#EFE6FF; border-radius:12px;
+    padding:16px 18px; display:flex; align-items:center; gap:12px;
+  }
+  .ad-budget-banner svg{width:22px; height:22px; color:#3B2A7A; flex-shrink:0;}
+  .ad-budget-banner p{margin:0; font-size:14px; color:#1A2340; line-height:1.45;}
+  .ad-budget-banner a{color:#1A2340; font-weight:600; text-decoration:underline;}
+  .ad-budget-banner a:hover{color:var(--blue);}
+
+  @media (max-width:768px){
+    .page-shell{padding:20px 16px 36px;}
+    .ad-budget-title{font-size:22px; padding:22px 16px 16px;}
+    .ad-budget-grid{
+      grid-template-columns:minmax(160px, 1.1fr) repeat(3, minmax(140px, 1fr));
+      overflow-x:auto; gap:8px; padding:0 12px 8px;
+    }
+    .ad-tier-ads{font-size:18px;}
+    .ad-tier-price{font-size:16px;}
+    .ad-feature-cell{font-size:12px; padding:14px 8px;}
+    .ad-budget-banner{margin:12px; padding:14px;}
+  }
+</style>
+</head>
+<body>
+  <div class="page-shell">
+    <div class="top-bar">
+      <img class="brand-logo" src="assets/seek-logo-full.svg" alt="SEEK">
+      <a class="back-link" href="Seek.html">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="15 18 9 12 15 6"/></svg>
+        Back to portal
+      </a>
+    </div>
+
+    <div class="page-eyebrow">Ad Purchasing</div>
+    <div class="ad-budget-card">
+      <h1 class="ad-budget-title">Choose Ad Budget</h1>
+      <div class="ad-budget-grid">
+        <div class="ad-budget-corner" aria-hidden="true"></div>
+        <div class="ad-tier">
+          <div class="ad-tier-label">For occasional hiring</div>
+          <div class="ad-tier-ads">2 - 3 ads</div>
+          <div class="ad-tier-price">$1,150<span>+GST</span></div>
+        </div>
+        <div class="ad-tier">
+          <div class="ad-tier-label">For regular hiring</div>
+          <div class="ad-tier-ads">4 - 6 ads</div>
+          <div class="ad-tier-price">$1,800<span>+GST</span></div>
+        </div>
+        <div class="ad-tier">
+          <div class="ad-tier-label">For frequent hiring</div>
+          <div class="ad-tier-ads">6 - 10 ads</div>
+          <div class="ad-tier-price">$3,450<span>+GST</span></div>
+        </div>
+
+        <div class="ad-feature-label">
+          <div class="ad-feature-name">Discount on Branded Basic</div>
+          <div class="ad-feature-desc">Applicable to Basic ad + Branded add-on</div>
+        </div>
+        <div class="ad-feature-cell">5% off Basic ad + 17.65% off Branded add-on</div>
+        <div class="ad-feature-cell">10% off Basic ad + 17.65% off Branded add-on</div>
+        <div class="ad-feature-cell">15% off Basic ad + 17.65% off Branded add-on</div>
+
+        <div class="ad-feature-label">
+          <div class="ad-feature-name">Discount on Branded Advanced</div>
+          <div class="ad-feature-desc">Applicable to Advanced ad + Branded add-on</div>
+        </div>
+        <div class="ad-feature-cell">0% off Advanced ad + 17.65% off Branded add-on</div>
+        <div class="ad-feature-cell">0% off Advanced ad + 17.65% off Branded add-on</div>
+        <div class="ad-feature-cell">0% off Advanced ad + 17.65% off Branded add-on</div>
+
+        <div class="ad-feature-label">
+          <div class="ad-feature-name">Discount on Premium</div>
+          <div class="ad-feature-desc">Applicable to Premium ad</div>
+        </div>
+        <div class="ad-feature-cell">N/A</div>
+        <div class="ad-feature-cell">N/A</div>
+        <div class="ad-feature-cell">N/A</div>
+
+        <div class="ad-feature-label">
+          <div class="ad-feature-name">Discount on add-ons</div>
+          <div class="ad-feature-desc">Applicable to 'Immediate start' badge and Reference Checks add-ons</div>
+        </div>
+        <div class="ad-feature-cell">N/A</div>
+        <div class="ad-feature-cell">N/A</div>
+        <div class="ad-feature-cell">N/A</div>
+      </div>
+      <div class="ad-budget-banner">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 11v2a1 1 0 0 0 1 1h1l5 5V5L5 10H4a1 1 0 0 0-1 1z"/><path d="M15.5 8.5a5 5 0 0 1 0 7"/><path d="M18 6a8.5 8.5 0 0 1 0 12"/></svg>
+        <p>To find the most suitable Ad Budget for your hiring needs, <a href="#">chat with our Ad Budget AI Assistant</a></p>
+      </div>
+    </div>
+  </div>
+</body>
+</html>

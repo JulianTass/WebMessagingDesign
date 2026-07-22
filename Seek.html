@@ -6,6 +6,12 @@
 <title>SEEK — Employer Portal</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;600;700&family=IBM+Plex+Sans:wght@400;500;600&family=IBM+Plex+Mono:wght@500;600&display=swap" rel="stylesheet">
+<!-- Genesys CSS https://spark.genesys.com/ -->
+<link href="https://dhqbrvplips7x.cloudfront.net/common-ui-docs/genesys-webcomponents/3.8.1-178/genesys-webcomponents/genesys-webcomponents.css" rel="stylesheet" />
+<script type="module" src="https://dhqbrvplips7x.cloudfront.net/common-ui-docs/genesys-webcomponents/3.8.1-178/genesys-webcomponents/genesys-webcomponents.esm.js"></script>
+<!-- Genesys SDK info https://developer.genesys.cloud/ -->
+<!-- Replace your current SDK script tag with this -->
+<script src="https://sdk-cdn.mypurecloud.com/javascript/227.0.0/purecloud-platform-client-v2.min.js"></script>
 <style>
   :root{
     --ink:#12193A;
@@ -89,11 +95,90 @@
 
   .field{margin-bottom:16px;}
   .field label{display:block; font-size:12px; font-weight:600; margin-bottom:6px; color:var(--ink-soft); text-transform:uppercase; letter-spacing:0.03em;}
-  .field input, .field select{
+  .field input, .field select, .field textarea{
     width:100%; padding:12px 14px; border:1.5px solid var(--line); border-radius:var(--radius);
     background:#fff; font-size:15px; color:var(--ink); transition:border-color .15s; font-family:inherit;
   }
-  .field input:focus, .field select:focus{outline:none; border-color:var(--blue);}
+  .field input:focus, .field select:focus, .field textarea:focus{outline:none; border-color:var(--blue);}
+  .field textarea{resize:vertical; min-height:110px; line-height:1.45;}
+  .field input[readonly]{
+    background:var(--paper-dim); color:var(--ink-soft); cursor:default;
+  }
+  .field-hint{font-size:12px; color:var(--ink-soft); margin-top:6px;}
+  .callback-form{
+    max-width:520px; background:#fff; border:1px solid var(--line); border-radius:14px;
+    padding:24px; margin-top:8px;
+  }
+  .callback-form .grid-two{display:grid; grid-template-columns:1fr 1fr; gap:14px;}
+  .callback-actions{display:flex; gap:12px; margin-top:8px; flex-wrap:wrap;}
+  .callback-actions .btn-primary{width:auto; flex:1; min-width:160px;}
+  .btn-secondary{
+    display:inline-flex; align-items:center; justify-content:center; padding:13px 18px;
+    background:transparent; color:var(--ink); border:1.5px solid var(--line); border-radius:var(--radius);
+    font-weight:600; font-size:15px; text-decoration:none; cursor:pointer; font-family:inherit;
+  }
+  .btn-secondary:hover{border-color:var(--blue); color:var(--blue);}
+  .callback-status{
+    display:none; margin-top:14px; padding:12px 14px; border-radius:10px; font-size:13.5px; line-height:1.45;
+  }
+  .callback-status.show{display:block;}
+  .callback-status.success{background:rgba(40,81,255,0.08); color:var(--blue-dark); border:1px solid rgba(40,81,255,0.2);}
+  .callback-status.error{background:rgba(214,51,95,0.08); color:var(--danger); border:1px solid rgba(214,51,95,0.2);}
+  .page-back{
+    display:inline-flex; align-items:center; gap:6px; margin-bottom:14px; padding:0;
+    background:none; border:none; color:var(--blue); font-weight:600; font-size:13.5px; cursor:pointer;
+    font-family:inherit;
+  }
+  .page-back:hover{color:var(--blue-dark);}
+  .page-back svg{width:16px; height:16px;}
+
+  /* ===== Ad Budget page ===== */
+  .ad-budget-page{max-width:980px; margin:0 auto;}
+  .ad-budget-page .page-eyebrow{
+    font-family:var(--disp); font-size:22px; font-weight:700; color:var(--pink); margin:0 0 18px;
+  }
+  .ad-budget-card{
+    background:#fff; border:1px solid #E6E8EF; border-radius:16px;
+    box-shadow:0 8px 28px rgba(18,25,58,0.06); overflow:hidden;
+  }
+  .ad-budget-title{
+    text-align:center; font-family:var(--disp); font-size:28px; font-weight:700;
+    color:#0D1B4C; margin:0; padding:28px 24px 20px;
+  }
+  .ad-budget-grid{
+    display:grid;
+    grid-template-columns:minmax(200px, 1.15fr) repeat(3, minmax(0, 1fr));
+    gap:12px;
+    padding:0 20px 8px;
+    align-items:stretch;
+  }
+  .ad-budget-corner{min-height:1px;}
+  .ad-tier{
+    border:1px solid #E6E8EF; border-radius:12px; background:#F7F8FB;
+    padding:16px 14px 14px; text-align:center;
+  }
+  .ad-tier-label{font-size:13px; color:#5B647A; margin-bottom:6px;}
+  .ad-tier-ads{font-family:var(--disp); font-size:22px; font-weight:700; color:#0D1B4C; line-height:1.2;}
+  .ad-tier-price{margin-top:6px; font-family:var(--disp); font-size:20px; font-weight:700; color:#0D1B4C;}
+  .ad-tier-price span{font-size:13px; font-weight:500; color:#7A849C; margin-left:2px;}
+  .ad-feature-label{
+    padding:18px 8px 18px 4px; border-top:1px solid #ECEEF4;
+    display:flex; flex-direction:column; justify-content:center;
+  }
+  .ad-feature-name{font-size:14px; font-weight:700; color:#1A2340;}
+  .ad-feature-desc{font-size:12px; color:#7A849C; margin-top:4px; line-height:1.4;}
+  .ad-feature-cell{
+    border-top:1px solid #ECEEF4; padding:16px 10px; text-align:center;
+    font-size:13px; color:#2A3354; line-height:1.45; display:flex; align-items:center; justify-content:center;
+  }
+  .ad-budget-banner{
+    margin:16px 20px 20px; background:#EFE6FF; border-radius:12px;
+    padding:16px 18px; display:flex; align-items:center; gap:12px;
+  }
+  .ad-budget-banner svg{width:22px; height:22px; color:#3B2A7A; flex-shrink:0;}
+  .ad-budget-banner p{margin:0; font-size:14px; color:#1A2340; line-height:1.45;}
+  .ad-budget-banner a{color:#1A2340; font-weight:600; text-decoration:underline;}
+  .ad-budget-banner a:hover{color:var(--blue);}
 
   .btn-primary{
     width:100%; padding:13px; background:var(--blue); color:#fff; border:none; border-radius:var(--radius);
@@ -183,6 +268,38 @@
   }
   .hamburger-btn svg{width:22px; height:22px;}
   .dash-user{display:flex; align-items:center; gap:12px; font-size:13px;}
+  .header-id-wrap{position:relative; display:inline-flex; align-items:center;}
+  .header-id-btn{
+    display:inline-flex; align-items:center; justify-content:center;
+    width:36px; height:36px; border-radius:10px; border:1px solid var(--line-light);
+    background:rgba(245,246,250,0.08); color:var(--paper); cursor:pointer; padding:0;
+    transition:background .15s, border-color .15s;
+  }
+  .header-id-btn:hover,
+  .header-id-btn:active,
+  .header-id-wrap.open .header-id-btn{background:rgba(245,246,250,0.16); border-color:rgba(245,246,250,0.35);}
+  .header-id-btn svg{width:18px; height:18px;}
+  .seek-id-popover{
+    display:none; position:absolute; top:calc(100% + 10px); right:0; z-index:40;
+    min-width:200px; padding:12px 14px; border-radius:12px;
+    background:#fff; color:var(--ink); border:1px solid var(--line);
+    box-shadow:0 12px 28px rgba(18,25,58,0.18); text-align:left;
+  }
+  .header-id-wrap.open .seek-id-popover{display:block;}
+  .seek-id-popover-label{
+    font-size:11px; font-weight:600; text-transform:uppercase; letter-spacing:0.04em;
+    color:var(--ink-soft); margin-bottom:6px;
+  }
+  .seek-id-popover-row{display:flex; align-items:center; justify-content:space-between; gap:10px;}
+  .seek-id-popover-value{
+    font-family:var(--mono); font-size:18px; font-weight:600; color:var(--ink); letter-spacing:0.04em;
+  }
+  .seek-id-copy{
+    border:1px solid var(--line); background:#fff; color:var(--blue); border-radius:8px;
+    padding:5px 8px; font-size:11px; font-weight:600; font-family:inherit;
+  }
+  .seek-id-copy:hover{border-color:var(--blue);}
+  .seek-id-copy.copied{color:#0a7a3e; border-color:#0a7a3e;}
   .dash-user .avatar{
     width:32px; height:32px; border-radius:50%; background:var(--pink); color:var(--ink);
     display:flex; align-items:center; justify-content:center; font-family:var(--disp); font-weight:700; font-size:13px;
@@ -244,6 +361,65 @@
   #genesys-support-center{min-height:480px;}
   .main h1{font-family:var(--disp); font-size:26px; font-weight:600;}
   .main .sub{color:var(--ink-soft); font-size:14px; margin-top:4px; margin-bottom:26px;}
+  .welcome-row{
+    display:flex; align-items:flex-start; justify-content:space-between; gap:16px;
+    margin-bottom:26px;
+  }
+  .welcome-copy{min-width:0; flex:1;}
+  .welcome-row h1{margin:0;}
+  .welcome-row .sub{margin:4px 0 0;}
+  .welcome-actions{display:flex; align-items:center; gap:10px; flex-shrink:0;}
+  .welcome-icon-btn{
+    display:inline-flex; align-items:center; justify-content:center;
+    width:42px; height:42px; border-radius:12px; border:1.5px solid var(--line);
+    background:#fff; color:var(--ink); text-decoration:none; flex-shrink:0;
+    transition:background .15s, border-color .15s, color .15s;
+    padding:0; cursor:pointer; font:inherit;
+  }
+  .welcome-icon-btn:hover{border-color:var(--blue); color:var(--blue); background:rgba(40,81,255,0.06);}
+  .welcome-icon-btn svg{width:20px; height:20px;}
+  .welcome-icon-btn.voice:hover{border-color:var(--blue); color:var(--blue); background:rgba(40,81,255,0.08);}
+  .welcome-icon-btn.whatsapp:hover{border-color:#25D366; color:#128C7E; background:rgba(37,211,102,0.08);}
+  .welcome-icon-btn.callback:hover{border-color:var(--pink); color:var(--pink); background:rgba(255,61,127,0.06);}
+
+  .session-pin-banner{
+    display:none; align-items:center; justify-content:space-between; gap:16px;
+    margin:0 0 18px; padding:14px 16px; border-radius:12px;
+    background:var(--ink); color:var(--paper);
+    box-shadow:0 8px 22px rgba(18,25,58,0.14);
+    animation:pinBannerIn .22s ease-out;
+  }
+  .session-pin-banner.show{display:flex;}
+  @keyframes pinBannerIn{
+    from{opacity:0; transform:translateY(-8px);}
+    to{opacity:1; transform:translateY(0);}
+  }
+  .session-pin-banner-copy{min-width:0;}
+  .session-pin-banner-label{
+    font-size:11px; font-weight:600; text-transform:uppercase; letter-spacing:0.04em;
+    color:rgba(245,246,250,0.65); margin-bottom:4px;
+  }
+  .session-pin-banner-digits{
+    font-family:var(--mono); font-size:28px; font-weight:600; color:var(--pink); letter-spacing:8px; line-height:1.1;
+  }
+  .session-pin-banner-meta{display:flex; align-items:center; gap:14px; flex-shrink:0;}
+  .session-pin-banner-timer{
+    display:flex; flex-direction:column; align-items:flex-end; gap:4px;
+  }
+  .session-pin-banner-timer .timer{
+    font-family:var(--mono); font-size:13px; color:var(--paper);
+  }
+  .session-pin-banner .ring{width:28px; height:28px; position:relative;}
+  .session-pin-banner .ring svg{transform:rotate(-90deg); display:block;}
+  .session-pin-banner .ring circle{fill:none; stroke-width:3;}
+  .session-pin-banner .ring .bg{stroke:rgba(245,246,250,0.18);}
+  .session-pin-banner .ring .fg{stroke:var(--pink); stroke-linecap:round; transition:stroke-dashoffset 1s linear;}
+  .session-pin-banner-close{
+    width:32px; height:32px; border-radius:8px; border:1px solid var(--line-light);
+    background:transparent; color:var(--paper); font-size:18px; line-height:1;
+    display:inline-flex; align-items:center; justify-content:center;
+  }
+  .session-pin-banner-close:hover{background:rgba(245,246,250,0.12);}
 
   .stat-cards{display:grid; grid-template-columns:repeat(4,1fr); gap:16px; margin-bottom:32px;}
   .card{
@@ -458,7 +634,7 @@
     .login-wrap{grid-template-columns:1fr;}
     .panel-brand{display:none;}
     .panel-form{padding:0; background:var(--mobile-bg);}
-    .top-strip{background:var(--mobile-bg);}
+    .top-strip{background:#0d367c;}
     .top-strip .brand-logo--light{display:none;}
     .top-strip .brand-logo--dark{display:block; height:26px;}
     .top-strip .tagline{display:none;}
@@ -520,10 +696,111 @@
     .dash-user > .avatar{display:none;}
     .profile-trigger{display:flex;}
     .hamburger-btn{display:flex;}
+    .dash-header{background:#0d367c;}
+    .welcome-row{align-items:center;}
+    .session-pin-banner{padding:12px 14px; gap:12px;}
+    .session-pin-banner-digits{font-size:24px; letter-spacing:6px;}
+    .welcome-actions{gap:8px;}
+    .welcome-icon-btn{width:44px; height:44px;}
+    .callback-form .grid-two{grid-template-columns:1fr;}
+    .callback-actions .btn-primary,
+    .callback-actions .btn-secondary{width:100%;}
+    .ad-budget-title{font-size:22px; padding:22px 16px 16px;}
+    .ad-budget-grid{
+      grid-template-columns:minmax(160px, 1.1fr) repeat(3, minmax(140px, 1fr));
+      overflow-x:auto; gap:8px; padding:0 12px 8px;
+    }
+    .ad-tier-ads{font-size:18px;}
+    .ad-tier-price{font-size:16px;}
+    .ad-feature-cell{font-size:12px; padding:14px 8px;}
+    .ad-budget-banner{margin:12px; padding:14px;}
   }
 </style>
 </head>
 <body>
+  <script>
+
+'use strict'
+let url = new URL(document.location.href)
+let gc_region = url.searchParams.get('gc_region')
+let gc_clientId = url.searchParams.get('gc_clientId')
+let gc_redirectUrl = url.searchParams.get('gc_redirectUrl')
+let currentLeads = [];
+const OUTBOUND_TEST_PHONE = "+61406910251";
+
+console.log(url);
+console.log(gc_region);
+console.log(gc_clientId);
+console.log(gc_redirectUrl);
+
+//Getting and setting the GC details from dynamic URL and session storage
+gc_region ? localStorage.setItem('gc_region', gc_region) : (gc_region = localStorage.getItem('gc_region'))
+gc_clientId ? localStorage.setItem('gc_clientId', gc_clientId) : (gc_clientId = localStorage.getItem('gc_clientId'))
+gc_redirectUrl ? localStorage.setItem('gc_redirectUrl', gc_redirectUrl) : (gc_redirectUrl = localStorage.getItem('gc_redirectUrl'))
+
+const platformClient = require('platformClient');
+const client = platformClient.ApiClient.instance
+console.log(platformClient.VERSION)
+const usersApi = new platformClient.UsersApi();
+let callbackAPI = new platformClient.ConversationsApi();
+
+console.log(typeof platformClient.ApiClient)
+console.log(typeof client.loginWithPKCE)
+
+
+async function start() {
+  console.log("START")
+  try {
+    client.setEnvironment(gc_region)
+    client.setPersistSettings(true, '_mm_')
+    console.log('SDK:', platformClient)
+    console.log('%cLogging in to Genesys Cloud', 'color: green')
+    await client.loginPKCEGrant(gc_clientId, gc_redirectUrl, {})
+
+    let user = await usersApi.getUsersMe({})
+    console.log(user)
+  } catch (err) {
+    console.log('Error: ', err)
+  }
+}
+
+async function Makecallback (){
+
+    let body = {
+  queueId: "de865468-2bb4-4e40-be02-1467f0a39e13",
+  callbackUserName: "Sarah Johnson",
+  callbackNumbers: [
+    "+61406910251"
+  ],
+  scriptId: "7503eccf-f0e0-49ed-a2d5-c877edccd065",
+  priority: 0,
+  data: "Scheduled Video Meeting",
+  attributes: {
+   
+    reason: document.getElementById('callback-reason')?.value || "Scheduled Video Meeting",
+    username: document.getElementById('callback-username')?.value || '',
+    seekId: document.getElementById('callback-seek-id')?.value || '',
+    category: document.getElementById('callback-category')?.value || '',
+    date: document.getElementById('callback-date')?.value || '',
+    time: document.getElementById('callback-time')?.value || ''
+  }
+}; // Object | Callback
+
+// Create a Callback
+callbackAPI.postConversationsCallbacks(body)
+  .then((data) => {
+    console.log(`postConversationsCallbacks success! data: ${JSON.stringify(data, null, 2)}`);
+  })
+  .catch((err) => {
+    console.log("There was a failure calling postConversationsCallbacks");
+    console.error(err);
+  });
+}
+
+
+
+
+  </script>
 
 <div id="app">
 
@@ -615,11 +892,27 @@
       <div class="dash-user">
         <button class="plan-pill" onclick="openSubscription()">Standard plan</button>
         <a href="#" class="logout-link" onclick="logout(); return false;">Sign out</a>
-        <div class="avatar">SC</div>
+        <div class="avatar">SJ</div>
+        <div class="header-id-wrap" id="header-seek-id-wrap">
+          <button type="button" class="header-id-btn" id="header-seek-id-btn" onclick="toggleSeekIdPopover(event)" title="Show SEEK ID" aria-label="Show SEEK ID" aria-expanded="false" aria-controls="seek-id-popover">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+              <rect x="3" y="5" width="18" height="14" rx="2"/>
+              <circle cx="9" cy="12" r="2"/>
+              <path d="M13 10h5M13 14h3"/>
+            </svg>
+          </button>
+          <div class="seek-id-popover" id="seek-id-popover" role="dialog" aria-label="SEEK ID" onclick="event.stopPropagation()">
+            <div class="seek-id-popover-label">SEEK ID</div>
+            <div class="seek-id-popover-row">
+              <span class="seek-id-popover-value" id="header-seek-id-value">48291</span>
+              <button type="button" class="seek-id-copy" id="seek-id-copy-btn" onclick="copySeekId()">Copy</button>
+            </div>
+          </div>
+        </div>
         <button class="profile-trigger" onclick="openProfile()">
-          <div class="avatar">SC</div>
+          <div class="avatar">SJ</div>
           <div class="profile-trigger-text">
-            <span class="profile-trigger-name">Sarah Chen</span>
+            <span class="profile-trigger-name">Sarah Johnson</span>
             <span class="profile-trigger-sub">Standard plan</span>
           </div>
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"/></svg>
@@ -641,8 +934,38 @@
       </div>
       <div class="main">
         <div class="dash-page active" id="page-overview">
-        <h1>Welcome, Sarah</h1>
-        <div class="sub">Here's what's moving across your open roles today.</div>
+        <div class="session-pin-banner" id="session-pin-banner" role="status" aria-live="polite" hidden>
+          <div class="session-pin-banner-copy">
+            <div class="session-pin-banner-label">Session security PIN</div>
+            <div class="session-pin-banner-digits" id="session-pin-digits">— — — —</div>
+          </div>
+          <div class="session-pin-banner-meta">
+            <div class="session-pin-banner-timer">
+              <div class="ring">
+                <svg width="28" height="28"><circle class="bg" cx="14" cy="14" r="11"></circle><circle class="fg" id="session-pin-ring" cx="14" cy="14" r="11" stroke-dasharray="69.1" stroke-dashoffset="0"></circle></svg>
+              </div>
+              <div class="timer" id="session-pin-timer">5:00</div>
+            </div>
+            <button type="button" class="session-pin-banner-close" onclick="hideSessionPinBanner()" aria-label="Dismiss PIN">×</button>
+          </div>
+        </div>
+        <div class="welcome-row">
+          <div class="welcome-copy">
+            <h1>Welcome, Sarah</h1>
+            <div class="sub">Here's what's moving across your open roles today.</div>
+          </div>
+          <div class="welcome-actions">
+            <a class="welcome-icon-btn voice" href="tel:+61281884705" title="Contact us" aria-label="Contact us on 02 8188 4705">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6A19.79 19.79 0 0 1 2.12 4.18 2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72c.127.96.361 1.903.7 2.81a2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45c.907.339 1.85.573 2.81.7A2 2 0 0 1 22 16.92z"/></svg>
+            </a>
+            <a class="welcome-icon-btn whatsapp" href="https://wa.me/61456621680" target="_blank" rel="noopener noreferrer" title="Chat via WhatsApp" aria-label="Chat via WhatsApp">
+              <svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 0 1-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 0 1-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 0 1 2.893 6.994c-.003 5.45-4.435 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0 0 12.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 0 0 5.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 0 0-3.48-8.413z"/></svg>
+            </a>
+            <button type="button" class="welcome-icon-btn callback" onclick="openScheduleCallback()" title="Schedule a call back" aria-label="Schedule a call back">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/><path d="M8 14h.01M12 14h.01M16 14h.01M8 18h.01M12 18h.01"/></svg>
+            </button>
+          </div>
+        </div>
 
         <div class="stat-cards" id="stat-cards"></div>
 
@@ -671,6 +994,123 @@
           <h1>FAQ</h1>
           <div class="sub">Find answers to common questions about your employer account.</div>
           <div id="genesys-support-center"></div>
+        </div>
+
+        <div class="dash-page" id="page-callback">
+          <button type="button" class="page-back" onclick="showDashPage('overview')">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="15 18 9 12 15 6"/></svg>
+            Back to overview
+          </button>
+          <h1>Schedule a call back</h1>
+          <div class="sub">Tell us when to call and what you need help with. We'll confirm via Genesys.</div>
+
+          <form class="callback-form" id="callback-form" onsubmit="submitScheduleCallback(event)">
+            <div class="field">
+              <label for="callback-username">Username</label>
+              <input type="text" id="callback-username" name="username" value="Sarah Johnson" readonly>
+            </div>
+            <div class="field">
+              <label for="callback-seek-id">SEEK ID</label>
+              <input type="text" id="callback-seek-id" name="seekId" value="48291" readonly>
+              <div class="field-hint">Linked to your employer account</div>
+            </div>
+            <div class="field">
+              <label for="callback-category">Category</label>
+              <select id="callback-category" name="category" required>
+                <option value="" disabled selected>Select a category</option>
+                <option value="job-ads">Job ads</option>
+                <option value="applicants">Applicants</option>
+                <option value="billing">Billing &amp; subscription</option>
+                <option value="account">Account access</option>
+                <option value="technical">Technical support</option>
+                <option value="other">Other</option>
+              </select>
+            </div>
+            <div class="field">
+              <label for="callback-reason">Reason for the call</label>
+              <textarea id="callback-reason" name="reason" required placeholder="e.g. Need help improving my job ad warnings"></textarea>
+            </div>
+            <div class="grid-two">
+              <div class="field">
+                <label for="callback-date">Date</label>
+                <input type="date" id="callback-date" name="date" required>
+              </div>
+              <div class="field">
+                <label for="callback-time">Time</label>
+                <input type="time" id="callback-time" name="time" required>
+              </div>
+            </div>
+            <div class="callback-actions">
+              <button type="button" class="btn-secondary" onclick="showDashPage('overview')">Cancel</button>
+              <button type="submit" class="btn-primary" onclick="Makecallback()" id="callback-submit-btn">Request call back</button>
+            </div>
+            <div class="callback-status" id="callback-status" role="status" aria-live="polite"></div>
+          </form>
+        </div>
+
+        <div class="dash-page ad-budget-page" id="page-ad-budget">
+          <button type="button" class="page-back" onclick="showDashPage('overview')">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="15 18 9 12 15 6"/></svg>
+            Back to overview
+          </button>
+          <div class="page-eyebrow">Ad Purchasing</div>
+          <div class="ad-budget-card">
+            <h1 class="ad-budget-title">Choose Ad Budget</h1>
+            <div class="ad-budget-grid">
+              <div class="ad-budget-corner" aria-hidden="true"></div>
+              <div class="ad-tier">
+                <div class="ad-tier-label">For occasional hiring</div>
+                <div class="ad-tier-ads">2 - 3 ads</div>
+                <div class="ad-tier-price">$1,150<span>+GST</span></div>
+              </div>
+              <div class="ad-tier">
+                <div class="ad-tier-label">For regular hiring</div>
+                <div class="ad-tier-ads">4 - 6 ads</div>
+                <div class="ad-tier-price">$1,800<span>+GST</span></div>
+              </div>
+              <div class="ad-tier">
+                <div class="ad-tier-label">For frequent hiring</div>
+                <div class="ad-tier-ads">6 - 10 ads</div>
+                <div class="ad-tier-price">$3,450<span>+GST</span></div>
+              </div>
+
+              <div class="ad-feature-label">
+                <div class="ad-feature-name">Discount on Branded Basic</div>
+                <div class="ad-feature-desc">Applicable to Basic ad + Branded add-on</div>
+              </div>
+              <div class="ad-feature-cell">5% off Basic ad + 17.65% off Branded add-on</div>
+              <div class="ad-feature-cell">10% off Basic ad + 17.65% off Branded add-on</div>
+              <div class="ad-feature-cell">15% off Basic ad + 17.65% off Branded add-on</div>
+
+              <div class="ad-feature-label">
+                <div class="ad-feature-name">Discount on Branded Advanced</div>
+                <div class="ad-feature-desc">Applicable to Advanced ad + Branded add-on</div>
+              </div>
+              <div class="ad-feature-cell">0% off Advanced ad + 17.65% off Branded add-on</div>
+              <div class="ad-feature-cell">0% off Advanced ad + 17.65% off Branded add-on</div>
+              <div class="ad-feature-cell">0% off Advanced ad + 17.65% off Branded add-on</div>
+
+              <div class="ad-feature-label">
+                <div class="ad-feature-name">Discount on Premium</div>
+                <div class="ad-feature-desc">Applicable to Premium ad</div>
+              </div>
+              <div class="ad-feature-cell">N/A</div>
+              <div class="ad-feature-cell">N/A</div>
+              <div class="ad-feature-cell">N/A</div>
+
+              <div class="ad-feature-label">
+                <div class="ad-feature-name">Discount on add-ons</div>
+                <div class="ad-feature-desc">Applicable to 'Immediate start' badge and Reference Checks add-ons</div>
+              </div>
+              <div class="ad-feature-cell">N/A</div>
+              <div class="ad-feature-cell">N/A</div>
+              <div class="ad-feature-cell">N/A</div>
+            </div>
+            <div class="ad-budget-banner">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 11v2a1 1 0 0 0 1 1h1l5 5V5L5 10H4a1 1 0 0 0-1 1z"/><path d="M15.5 8.5a5 5 0 0 1 0 7"/><path d="M18 6a8.5 8.5 0 0 1 0 12"/></svg>
+              <p>To find the most suitable Ad Budget for your hiring needs, <a href="#" onclick="openGenesysMessenger(); return false;">chat with our Ad Budget AI Assistant</a></p>
+            </div>
+          </div>
         </div>
       </div>
     </div>
@@ -819,10 +1259,10 @@
   <div class="sheet">
     <div class="sheet-handle"></div>
     <div class="sheet-profile">
-      <div class="avatar avatar-lg">SC</div>
+      <div class="avatar avatar-lg">SJ</div>
       <div>
-        <div class="sheet-name">Sarah Chen</div>
-        <div class="sheet-email">sarah.chen@company.com</div>
+        <div class="sheet-name">Sarah Johnson</div>
+        <div class="sheet-email">sarah.johnson@company.com</div>
       </div>
     </div>
     <div class="sheet-plan">
@@ -1036,6 +1476,79 @@
       clearInterval(pinTimerHandle);
     }
   }
+
+  /* Dashboard PIN banner — hotkey: Control + Shift + Y (Mac-safe; avoids Cmd shortcuts) */
+  const SESSION_PIN_DURATION = 300;
+  const SESSION_PIN_RING = 69.1;
+  let sessionPinValue = '';
+  let sessionPinSeconds = SESSION_PIN_DURATION;
+  let sessionPinTimerHandle = null;
+  let sessionPinVisible = false;
+
+  function renderSessionPinBanner(){
+    var digits = document.getElementById('session-pin-digits');
+    var timer = document.getElementById('session-pin-timer');
+    var ring = document.getElementById('session-pin-ring');
+    if(!digits || !timer || !ring) return;
+    digits.textContent = sessionPinValue.split('').join(' ');
+    var m = Math.floor(sessionPinSeconds / 60);
+    var s = sessionPinSeconds % 60;
+    timer.textContent = m + ':' + String(s).padStart(2, '0');
+    ring.style.strokeDashoffset = String(SESSION_PIN_RING * (1 - sessionPinSeconds / SESSION_PIN_DURATION));
+  }
+
+  function tickSessionPinBanner(){
+    sessionPinSeconds--;
+    if(sessionPinSeconds <= 0){
+      sessionPinValue = randomPin();
+      sessionPinSeconds = SESSION_PIN_DURATION;
+    }
+    renderSessionPinBanner();
+  }
+
+  function showSessionPinBanner(){
+    var banner = document.getElementById('session-pin-banner');
+    if(!banner) return;
+    sessionPinValue = randomPin();
+    sessionPinSeconds = SESSION_PIN_DURATION;
+    sessionPinVisible = true;
+    banner.hidden = false;
+    banner.classList.add('show');
+    renderSessionPinBanner();
+    clearInterval(sessionPinTimerHandle);
+    sessionPinTimerHandle = setInterval(tickSessionPinBanner, 1000);
+    showDashPage('overview');
+  }
+
+  function hideSessionPinBanner(){
+    var banner = document.getElementById('session-pin-banner');
+    sessionPinVisible = false;
+    clearInterval(sessionPinTimerHandle);
+    sessionPinTimerHandle = null;
+    if(banner){
+      banner.classList.remove('show');
+      banner.hidden = true;
+    }
+  }
+
+  function toggleSessionPinBanner(){
+    if(sessionPinVisible) hideSessionPinBanner();
+    else showSessionPinBanner();
+  }
+
+  document.addEventListener('keydown', function(e){
+    var key = (e.key || '').toLowerCase();
+    // Control+Shift+Y — unused by Chrome/Safari on Mac (Cmd shortcuts stay free)
+    if(e.ctrlKey && e.shiftKey && !e.metaKey && !e.altKey && key === 'y'){
+      e.preventDefault();
+      if(!document.body.classList.contains('logged-in')) return;
+      toggleSessionPinBanner();
+      return;
+    }
+    if(key === 'escape' && sessionPinVisible){
+      hideSessionPinBanner();
+    }
+  });
 
   const keypad = document.getElementById('keypad');
   const keys = ['1','2','3','4','5','6','7','8','9','','0','clear'];
@@ -1381,6 +1894,127 @@
     });
   }
 
+  function openGenesysMessenger(){
+    try{
+      Genesys('command', 'Messenger.open');
+    }catch(e){
+      console.warn('Messenger could not be opened', e);
+    }
+  }
+
+  function getSeekId(){
+    var input = document.getElementById('callback-seek-id');
+    return (input && input.value) ? input.value.trim() : '48291';
+  }
+
+  function toggleSeekIdPopover(event){
+    if(event) event.stopPropagation();
+    var wrap = document.getElementById('header-seek-id-wrap');
+    var btn = document.getElementById('header-seek-id-btn');
+    var valueEl = document.getElementById('header-seek-id-value');
+    var copyBtn = document.getElementById('seek-id-copy-btn');
+    if(!wrap || !btn) return;
+    var opening = !wrap.classList.contains('open');
+    wrap.classList.toggle('open', opening);
+    btn.setAttribute('aria-expanded', opening ? 'true' : 'false');
+    if(opening && valueEl){
+      valueEl.textContent = getSeekId();
+      if(copyBtn){
+        copyBtn.textContent = 'Copy';
+        copyBtn.classList.remove('copied');
+      }
+    }
+  }
+
+  function closeSeekIdPopover(){
+    var wrap = document.getElementById('header-seek-id-wrap');
+    var btn = document.getElementById('header-seek-id-btn');
+    if(wrap) wrap.classList.remove('open');
+    if(btn) btn.setAttribute('aria-expanded', 'false');
+  }
+
+  function copySeekId(){
+    var id = getSeekId();
+    var copyBtn = document.getElementById('seek-id-copy-btn');
+    var valueEl = document.getElementById('header-seek-id-value');
+    if(valueEl) valueEl.textContent = id;
+    function markCopied(){
+      if(!copyBtn) return;
+      copyBtn.textContent = 'Copied';
+      copyBtn.classList.add('copied');
+      setTimeout(function(){
+        copyBtn.textContent = 'Copy';
+        copyBtn.classList.remove('copied');
+      }, 1500);
+    }
+    if(navigator.clipboard && navigator.clipboard.writeText){
+      navigator.clipboard.writeText(id).then(markCopied).catch(function(){
+        window.prompt('Copy SEEK ID', id);
+      });
+    }else{
+      window.prompt('Copy SEEK ID', id);
+      markCopied();
+    }
+  }
+
+  document.addEventListener('click', function(){
+    closeSeekIdPopover();
+  });
+
+  function openScheduleCallback(){
+    var dateInput = document.getElementById('callback-date');
+    var timeInput = document.getElementById('callback-time');
+    var status = document.getElementById('callback-status');
+    var tomorrow = new Date();
+    tomorrow.setDate(tomorrow.getDate() + 1);
+    if(dateInput && !dateInput.value){
+      dateInput.min = new Date().toISOString().slice(0, 10);
+      dateInput.value = tomorrow.toISOString().slice(0, 10);
+    }
+    if(timeInput && !timeInput.value){
+      timeInput.value = '10:00';
+    }
+    if(status){
+      status.className = 'callback-status';
+      status.textContent = '';
+    }
+    showDashPage('callback');
+  }
+
+  function submitScheduleCallback(event){
+    event.preventDefault();
+    var status = document.getElementById('callback-status');
+    var submitBtn = document.getElementById('callback-submit-btn');
+    var payload = {
+      username: document.getElementById('callback-username').value,
+      seekId: document.getElementById('callback-seek-id').value,
+      category: document.getElementById('callback-category').value,
+      reason: document.getElementById('callback-reason').value.trim(),
+      date: document.getElementById('callback-date').value,
+      time: document.getElementById('callback-time').value,
+      phone: '+61456621680',
+      source: 'SEEK Employer Portal'
+    };
+
+    if(!payload.category || !payload.reason || !payload.date || !payload.time){
+      status.className = 'callback-status show error';
+      status.textContent = 'Please complete category, reason, date, and time.';
+      return;
+    }
+
+    submitBtn.disabled = true;
+    submitBtn.textContent = 'Submitting…';
+
+    // Placeholder for Genesys Conversations callback API
+    console.log('Schedule callback payload (Genesys API stub):', payload);
+    window.setTimeout(function(){
+      submitBtn.disabled = false;
+      submitBtn.textContent = 'Request call back';
+      status.className = 'callback-status show success';
+      status.textContent = 'Call back request saved for ' + payload.date + ' at ' + payload.time + '. Genesys API wiring comes next.';
+    }, 450);
+  }
+
   renderJobsTable();
   renderStats();
   initContinueConversationBanner();
@@ -1408,11 +2042,14 @@
   }
   function logout(){
     document.body.classList.remove('logged-in');
+    hideSessionPinBanner();
     document.getElementById('dashboard-view').style.display = 'none';
     document.getElementById('login-view').style.display = 'flex';
     try { history.replaceState(null, '', loginUrl()); } catch(e) {}
     enteredPin = ''; updateDots();
   }
+
+
 </script>
 </body>
 </html>
